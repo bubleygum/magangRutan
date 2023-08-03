@@ -6,11 +6,12 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 
 class chat extends StatefulWidget {
-  final String username;
+  final String uname;
 
-  const chat({required this.username, Key? key}) : super(key: key);
+  const chat({required this.uname, Key? key}) : super(key: key);
 
   @override
   _ChatState createState() => _ChatState();
@@ -25,10 +26,10 @@ class _ChatState extends State<chat> {
   bool isLoading = false;
   String noWA = "";
   late Timer timer;
-
   @override
   void initState() {
     super.initState();
+    getUserData();
     fetchFAQs();
     fetchChatHistory();
     startChatHistoryPolling();
@@ -38,6 +39,34 @@ class _ChatState extends State<chat> {
   void dispose() {
     stopChatHistoryPolling();
     super.dispose();
+  }
+
+  Map<String, dynamic> userData = {};
+  Future<void> getUserData() async {
+    final response = await http.post(
+        Uri.parse('http://localhost/getUserData.php'),
+        body: {'username': widget.uname});
+    if (response.statusCode == 200) {
+      final jsonData = jsonDecode(response.body);
+      print(jsonData);
+      if (jsonData['success']) {
+        if (jsonData.containsKey('data') &&
+            jsonData['data'] is List &&
+            jsonData['data'].length > 0) {
+          var data =
+              jsonData['data'][0]; // Access the first element of the array
+          setState(() {
+            userData = Map<String, dynamic>.from(data);
+          });
+        } else {
+          print('Invalid data format in the API response');
+        }
+      } else {
+        print(jsonData['message']);
+      }
+    } else {
+      throw Exception('Failed to fetch user data');
+    }
   }
 
   void fetchFAQs() async {
@@ -72,44 +101,48 @@ class _ChatState extends State<chat> {
     setState(() {
       isLoading = true;
     });
-
-    var url = Uri.parse('http://localhost/chat.php');
-    final response = await http.post(url, body: {'username': widget.username});
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['success']) {
-        if (data.containsKey('data')) {
-          List<ChatMessage> history = [];
-          for (var chatData in data['data']) {
-            ChatMessage message = ChatMessage(
-              message: chatData['Message'],
-              time: chatData['TimeSend'],
-              sender: chatData['Sender'],
-            );
-            history.add(message);
+    // print(userData["UserId"]);
+    if (userData['UserId'] == null) {
+      print("User data kosong :(");
+    } else {
+      var url = Uri.parse('http://localhost/chat.php');
+      final response = await http.post(url, body: {'uId': userData["UserId"]});
+      // print(jsonDecode(response.body));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success']) {
+          if (data.containsKey('data')) {
+            List<ChatMessage> history = [];
+            for (var chatData in data['data']) {
+              ChatMessage message = ChatMessage(
+                message: chatData['Message'],
+                time: chatData['TimeSend'],
+                sender: chatData['Sender'],
+              );
+              history.add(message);
+            }
+            setState(() {
+              chatHistory = history;
+              isLoading = false;
+            });
           }
+        } else {
+          print('RequestAAA failed: ${data['message']}');
           setState(() {
-            chatHistory = history;
             isLoading = false;
           });
         }
       } else {
-        print('Request failed: ${data['message']}');
+        print('Request failed with status: ${response.statusCode}');
         setState(() {
           isLoading = false;
         });
       }
-    } else {
-      print('Request failed with status: ${response.statusCode}');
-      setState(() {
-        isLoading = false;
-      });
     }
   }
 
   void startChatHistoryPolling() {
-    const pollInterval = Duration(seconds: 5); // Poll every 5 seconds
+    const pollInterval = Duration(seconds: 10);
     timer = Timer.periodic(pollInterval, (Timer timer) {
       fetchChatHistory();
     });
@@ -124,7 +157,7 @@ class _ChatState extends State<chat> {
   void sendMessage(String message, String sender) async {
     var url = Uri.parse('http://localhost/chat.php');
     final response = await http.post(url, body: {
-      'username': widget.username,
+      'uId': userData["UserId"],
       'message': message,
       'time': currentTime.toString(),
       'sender': sender,
@@ -140,62 +173,70 @@ class _ChatState extends State<chat> {
     }
   }
 
-void getWA() async {
-  var url = Uri.parse('http://localhost/chat.php');
-  final response = await http.post(url, body: {
-    'username': widget.username,
-    'getWA': "true",
-  });
-  if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
-    if (data['success']) {
-      final whatsappNumbers = data['data'];
-      if (whatsappNumbers.isNotEmpty) {
-        final hp = whatsappNumbers[0]['hp'].toString();
-        final url = "https://wa.me/$hp";
-        launch(url);
+  void getWA() async {
+    var url = Uri.parse('http://localhost/chat.php');
+    final response = await http.post(url, body: {
+      'uId': userData["UserId"],
+      'getWA': "true",
+    });
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        final whatsappNumbers = data['data'];
+        if (whatsappNumbers.isNotEmpty) {
+          final hp = whatsappNumbers[0]['hp'].toString();
+          final url = "https://wa.me/$hp";
+          launch(url);
+        }
       }
+    } else {
+      print('Request failed with status: ${response.statusCode}');
     }
-  } else {
-    print('Request failed with status: ${response.statusCode}');
   }
-}
-
-
 
   bool isButtonDisabled = false;
   void hubungiKamiBtn() async {
     //     // setState(() {
 //     //   isButtonDisabled = true;
 //     // });
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('Hubungi dengan'),
-        actions: <Widget>[
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              sendMessage("Baik, sales kami akan segera melayani anda", "admin");
-              sendMessage("Chat", widget.username);
-            },
-            child: Text('Chat'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              sendMessage("Call", widget.username);
-              getWA(); // Call the getWA function
-            },
-            child: Text('Call'),
-          ),
-        ],
-      );
-    },
-  );
-}
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Hubungi dengan'),
+          actions: <Widget>[
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                sendMessage("Chat", widget.uname);
+                const Duration(seconds: 5);
+                sendMessage(
+                    "Baik, sales kami akan segera melayani anda", "admin");
+              },
+              child: Text('Chat'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                sendMessage("Call", widget.uname);
+                getWA();
+              },
+              child: Text('Call'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
+  void navigateToFAQDetail(FAQ faq) {
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (context) => FAQDetailPage(faq: faq),
+    //   ),
+    // );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -213,6 +254,7 @@ void getWA() async {
           color: Color.fromRGBO(61, 133, 3, 1),
         ),
       ),
+      // backgroundColor: Color.fromRGBO(0, 0, 0, 0.1),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -238,7 +280,7 @@ void getWA() async {
                           'FAQ',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Color.fromRGBO(29, 133, 3, 1),
+                            color: Colors.black,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -265,14 +307,15 @@ void getWA() async {
                                   });
                                 },
                                 child: Container(
-                                  color: dropdownState ? Color.fromRGBO(255, 255, 255, 0.5) : null,
+                                  // color: dropdownState ? Color.fromRGBO(255, 255, 255, 0.5) : null,
                                   child: Padding(
                                     padding: EdgeInsets.all(8.0),
                                     child: Text(
                                       faq.question,
                                       style: TextStyle(
-                                          color: Color.fromRGBO(29, 133, 3, 1),
-                                          fontWeight: FontWeight.bold),
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15),
                                     ),
                                   ),
                                 ),
@@ -283,8 +326,7 @@ void getWA() async {
                                   child: Text(
                                     faq.answer,
                                     style: TextStyle(
-                                      color: Color.fromRGBO(29, 133, 3, 1),
-                                    ),
+                                        color: Colors.black, fontSize: 15),
                                   ),
                                 ),
                               SizedBox(height: 8.0),
@@ -301,11 +343,11 @@ void getWA() async {
                           onPressed: isButtonDisabled ? null : hubungiKamiBtn,
                           child: Text('Hubungkan dengan sales'),
                           style: ElevatedButton.styleFrom(
-                          primary: Color.fromRGBO(29, 133, 3, 0.3),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(0),
+                            primary: Color.fromRGBO(29, 133, 3, 0.3),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(0),
+                            ),
                           ),
-                        ),
                         ),
                       ),
                     ],
@@ -323,7 +365,7 @@ void getWA() async {
                     itemCount: chatHistory.length,
                     itemBuilder: (context, index) {
                       final message = chatHistory[index];
-                      final isCurrentUser = message.sender == widget.username;
+                      final isCurrentUser = message.sender == widget.uname;
                       return Align(
                         alignment: isCurrentUser
                             ? Alignment.topRight
@@ -334,7 +376,7 @@ void getWA() async {
                           padding: EdgeInsets.all(8.0),
                           decoration: BoxDecoration(
                             color: isCurrentUser
-                                ? Color.fromRGBO(29, 133, 3, 1)
+                                ? Color.fromRGBO(0, 0, 0, 0.2)
                                 : Color.fromRGBO(29, 133, 3, 0.3),
                             borderRadius: BorderRadius.circular(8.0),
                           ),
@@ -342,15 +384,116 @@ void getWA() async {
                             message.message,
                             style: TextStyle(
                               fontSize: 15,
-                              color: isCurrentUser
-                                  ? Colors.white
-                                  : Color.fromRGBO(29, 133, 3, 1),
+                              color:
+                                  isCurrentUser ? Colors.black : Colors.black,
                             ),
                           ),
                         ),
                       );
                     },
                   ),
+          ),
+          // Padding(
+          //   padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          //   child: CarouselSlider(
+          //     options: CarouselOptions(
+          //       height: 200,
+          //       enableInfiniteScroll: false,
+          //       onPageChanged: (index, reason) {
+          //         // Callback when the carousel page changes
+          //       },
+          //     ),
+          //     items: faqList.map((faq) {
+          //       return Builder(
+          //         builder: (BuildContext context) {
+          //           return GestureDetector(
+          //             onTap: () => navigateToFAQDetail(faq),
+          //             child: Card(
+          //               child: Container(
+          //                 padding: EdgeInsets.all(8.0),
+          //                 child: Text(faq.question),
+          //               ),
+          //             ),
+          //           );
+          //         },
+          //       );
+          //     }).toList(),
+          //   ),
+          // ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 6,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  CarouselSlider(
+                    options: CarouselOptions(
+                      height: 200,
+                      enableInfiniteScroll: false,
+                      enlargeCenterPage: true,
+                      viewportFraction: 0.85,
+                      onPageChanged: (index, reason) {
+                        // Callback when the carousel page changes
+                      },
+                    ),
+                    items: faqList.map((faq) {
+                      return Builder(
+                        builder: (BuildContext context) {
+                          return GestureDetector(
+                            onTap: () => navigateToFAQDetail(faq),
+                            child: Card(
+                              margin: EdgeInsets.symmetric(horizontal: 8.0),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              child: Container(
+                                padding: EdgeInsets.all(16.0),
+                                child: Text(
+                                  faq.question,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  SizedBox(height: 8.0),
+                  Divider(
+                    color: Color.fromRGBO(29, 133, 3, 1),
+                    thickness: 2.0,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton(
+                      onPressed: isButtonDisabled ? null : hubungiKamiBtn,
+                      child: Text('Hubungkan dengan sales'),
+                      style: ElevatedButton.styleFrom(
+                        primary: Color.fromRGBO(29, 133, 3, 0.3),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -372,7 +515,7 @@ void getWA() async {
                   onPressed: () {
                     final message = _chatController.text.trim();
                     if (message.isNotEmpty) {
-                      sendMessage(message, widget.username);
+                      sendMessage(message, widget.uname);
                       _chatController.clear();
                     }
                   },
@@ -390,14 +533,14 @@ void getWA() async {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => wishlist(username: widget.username)),
+                    builder: (context) => wishlist(username: widget.uname)),
               );
               break;
             case 1:
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => Home(username: widget.username)),
+                    builder: (context) => userHomeScreen(uname: widget.uname)),
               );
               break;
             case 2:
@@ -405,7 +548,7 @@ void getWA() async {
                 context,
                 MaterialPageRoute(
                     builder: (context) => chat(
-                          username: widget.username,
+                          uname: widget.uname,
                         )),
               );
               break;

@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:app/home.dart';
 import 'package:app/chat.dart';
+
 class wishlist extends StatefulWidget {
   final String username;
 
@@ -23,33 +24,64 @@ class _WishlistState extends State<wishlist> {
   @override
   void initState() {
     super.initState();
-    fetchWishlistData();
+    getUserData();
   }
 
-  Future<void> fetchWishlistData() async {
-    var url = Uri.parse('http://localhost/wishlist.php');
-    var queryParameters = {'username': widget.username};
-    try {
-      var response = await http.post(url, body: queryParameters);
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['success']) {
+  Map<String, dynamic> userData = {};
+  Future<void> getUserData() async {
+    final response = await http.post(
+      Uri.parse('http://localhost/getUserData.php'),
+      body: {'username': widget.username},
+    );
+    if (response.statusCode == 200) {
+      final jsonData = jsonDecode(response.body);
+      // print(jsonData);
+      if (jsonData['success']) {
+        if (jsonData.containsKey('data') &&
+            jsonData['data'] is List &&
+            jsonData['data'].length > 0) {
+          var data = jsonData['data'][0];
           setState(() {
-            wishlistData = List<Map<String, dynamic>>.from(data['data']);
+            userData = Map<String, dynamic>.from(data);
           });
+          if (userData['UserId'] != null) {
+            fetchWishlistData(userData['UserId']);
+          } else {
+            print('UserId is null in the API response');
+          }
+        } else {
+          print('Invalid data format in the API response');
         }
       } else {
-        throw Exception('Failed to fetch wishlist data');
+        print(jsonData['message']);
       }
-    } catch (error) {
-      print('Error sending request: $error');
+    } else {
+      throw Exception('Failed to fetch user data');
+    }
+  }
+
+  Future<void> fetchWishlistData(String userId) async {
+    final response = await http.post(
+      Uri.parse('http://localhost/wishlist.php'),
+      body: {'uId': userId},
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      // print(data);
+      if (data['success']) {
+        setState(() {
+          wishlistData = List<Map<String, dynamic>>.from(data['data']);
+        });
+      }
+    } else {
+      throw Exception('Failed to fetch wishlist data');
     }
   }
 
   Future<void> removeFromWishlist(String prodName) async {
     var url = Uri.parse('http://localhost/wishlist.php');
     var queryParameters = {
-      'username': widget.username,
+      'uId': userData["UserId"],
       'remove_id': prodName,
     };
     try {
@@ -133,34 +165,48 @@ class _WishlistState extends State<wishlist> {
             case 0:
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => wishlist(username: uname)),
+                MaterialPageRoute(
+                    builder: (context) => wishlist(username: uname)),
               );
               break;
             case 1:
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => Home(username: uname)),
+                MaterialPageRoute(
+                    builder: (context) => userHomeScreen(uname: uname)),
               );
               break;
             case 2:
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => chat(username: uname,)),
+                MaterialPageRoute(
+                    builder: (context) => chat(
+                          uname: uname,
+                        )),
               );
               break;
           }
         },
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.heart,color:Color.fromRGBO(29, 133, 3, 1),),
+            icon: FaIcon(
+              FontAwesomeIcons.heart,
+              color: Color.fromRGBO(29, 133, 3, 1),
+            ),
             label: '',
           ),
           BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.home, color:Color.fromRGBO(29, 133, 3, 1), ),
+            icon: FaIcon(
+              FontAwesomeIcons.home,
+              color: Color.fromRGBO(29, 133, 3, 1),
+            ),
             label: '',
           ),
           BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.message,color:Color.fromRGBO(29, 133, 3, 1),),
+            icon: FaIcon(
+              FontAwesomeIcons.message,
+              color: Color.fromRGBO(29, 133, 3, 1),
+            ),
             label: '',
           ),
         ],

@@ -1,6 +1,5 @@
 import 'package:app/chat.dart';
 import 'package:app/home.dart';
-import 'package:app/tentangKami.dart';
 import 'package:app/wishlist.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -10,9 +9,9 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class prodDetail extends StatefulWidget {
   final String data;
-  final String username;
+  final String uname;
 
-  const prodDetail({required this.data, required this.username, Key? key})
+  const prodDetail({required this.data, required this.uname, Key? key})
       : super(key: key);
 
   @override
@@ -27,6 +26,35 @@ class prodDetailState extends State<prodDetail> {
   void initState() {
     super.initState();
     fetchData();
+    getUserData();
+  }
+
+  Map<String, dynamic> userData = {};
+  Future<void> getUserData() async {
+    final response = await http.post(
+      Uri.parse('http://localhost/getUserData.php'),
+      body: {'username': widget.uname},
+    );
+    if (response.statusCode == 200) {
+      final jsonData = jsonDecode(response.body);
+      print(jsonData);
+      if (jsonData['success']) {
+        if (jsonData.containsKey('data') &&
+            jsonData['data'] is List &&
+            jsonData['data'].length > 0) {
+          var data = jsonData['data'][0];
+          setState(() {
+            userData = Map<String, dynamic>.from(data);
+          });
+        } else {
+          print('Invalid data format in the API response');
+        }
+      } else {
+        print(jsonData['message']);
+      }
+    } else {
+      throw Exception('Failed to fetch user data');
+    }
   }
 
   void fetchData() async {
@@ -59,7 +87,7 @@ class prodDetailState extends State<prodDetail> {
   Future<void> addToWishlist(String prodName, String? picUrl) async {
     var url = Uri.parse('http://localhost/prodDetail.php');
     var queryParameters = {
-      'username': widget.username,
+      'uId': userData["UserId"],
       'addCode': prodName,
       'addTime': currentTime.toString(),
       'picUrl': picUrl,
@@ -115,8 +143,7 @@ class prodDetailState extends State<prodDetail> {
   @override
   Widget build(BuildContext context) {
     final List<dynamic> photos = prodData['photos'] ?? [];
-    final prodName = prodData['ProdName'];
-
+    final prodName = prodData['ProdName'] ?? '';
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -142,7 +169,7 @@ class prodDetailState extends State<prodDetail> {
                 context,
                 MaterialPageRoute(
                     builder: (context) => wishlist(
-                          username: widget.username,
+                          username: widget.uname,
                         )),
               );
             },
@@ -177,18 +204,44 @@ class prodDetailState extends State<prodDetail> {
                       height: 200,
                       autoPlay: true,
                     ),
-                    items: photos.map<Widget>((photo) {
+                    items: photos.asMap().entries.map<Widget>((entry) {
+                      final index = entry.key;
+                      final photo = entry.value;
                       final picUrl = photo['UrlPhoto'];
                       return Builder(
                         builder: (BuildContext context) {
-                          return Image.network(
-                            picUrl,
-                            fit: BoxFit.cover,
+                          return Stack(
+                            children: [
+                              Image.network(
+                                picUrl,
+                                fit: BoxFit.cover,
+                              ),
+                              Positioned(
+                                bottom: 8,
+                                right: 8,
+                                child: Container(
+                                  padding: EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.6),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    '${index + 1}',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           );
                         },
                       );
                     }).toList(),
                   ),
+
                 SizedBox(
                   height: 20,
                 ),
@@ -206,7 +259,7 @@ class prodDetailState extends State<prodDetail> {
                     text: TextSpan(
                       text: '${prodData['Description']}',
                       style: TextStyle(
-                        color: Color.fromRGBO(29, 133, 3, 1),
+                        color: Colors.black,
                         fontSize: 20,
                       ),
                     ),
@@ -219,6 +272,7 @@ class prodDetailState extends State<prodDetail> {
                   children: [
                     Container(
                       width: double.infinity,
+                      // width: btnWidth,
                       child: ElevatedButton(
                         onPressed: () async {
                           await addToWishlist(
@@ -249,7 +303,7 @@ class prodDetailState extends State<prodDetail> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) => chat(
-                                      username: widget.username,
+                                      uname: widget.uname,
                                     )),
                           );
                         },
@@ -280,14 +334,14 @@ class prodDetailState extends State<prodDetail> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => wishlist(username: widget.username)),
+                    builder: (context) => wishlist(username: widget.uname)),
               );
               break;
             case 1:
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => Home(username: widget.username)),
+                    builder: (context) => userHomeScreen(uname: widget.uname)),
               );
               break;
             case 2:
@@ -295,7 +349,7 @@ class prodDetailState extends State<prodDetail> {
                 context,
                 MaterialPageRoute(
                     builder: (context) => chat(
-                          username: widget.username,
+                          uname: widget.uname,
                         )),
               );
               break;

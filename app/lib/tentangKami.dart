@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:app/wishlist.dart';
 import 'package:flutter/material.dart';
-import 'package:carousel_slider/carousel_slider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:app/home.dart';
 import 'package:app/chat.dart';
@@ -57,13 +56,13 @@ class tentangKami extends StatelessWidget {
             case 1:
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => Home(username: username)),
+                MaterialPageRoute(builder: (context) => userHomeScreen(uname: username)),
               );
               break;
             case 2:
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => chat(username: username,)),
+                MaterialPageRoute(builder: (context) => chat(uname: username,)),
               );
               break;
           }

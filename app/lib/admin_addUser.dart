@@ -1,25 +1,36 @@
-import 'package:app/login.dart';
+import 'package:app/admin_userList.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:app/home.dart';
-import 'auth_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:email_validator/email_validator.dart';
 
-class signUp extends StatelessWidget {
-  const signUp({Key? key}) : super(key: key);
+class addUser extends StatelessWidget {
+  final String uname;
+  addUser({required this.uname, Key? key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          "Add User",
+          style: TextStyle(
+            color: Color.fromRGBO(61, 133, 3, 1),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 4,
+        iconTheme: IconThemeData(
+          color: Color.fromRGBO(61, 133, 3, 1),
+        ),
+      ),
       body: Center(
         child: SingleChildScrollView(
           child: Padding(
             padding: EdgeInsets.all(16.0),
-            child: BlocProvider(
-              create: (context) => AuthBloc(),
-              child: signUpForm(),
+            child: addUserForm(
+              username: uname,
             ),
           ),
         ),
@@ -28,14 +39,17 @@ class signUp extends StatelessWidget {
   }
 }
 
-class signUpForm extends StatefulWidget {
+class addUserForm extends StatefulWidget {
+  final String username;
+
+  const addUserForm({required this.username, Key? key}) : super(key: key);
   @override
-  signUpState createState() => signUpState();
+  addUserState createState() => addUserState();
 }
 
-enum dealerStat { dealer, nonDealer }
+enum dealerStat { admin, salesRep }
 
-class signUpState extends State<signUpForm> {
+class addUserState extends State<addUserForm> {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   TextEditingController unameCont = TextEditingController();
   TextEditingController passCont = TextEditingController();
@@ -52,71 +66,63 @@ class signUpState extends State<signUpForm> {
   dealerStat? status;
   bool showTextField = false;
   DateTime currentTime = DateTime.now();
-  String userJob = "";
   bool areFieldsEmpty = false;
 
-  void signIn(String status) async {
-    Map<String, String> requestBody;
-    try {
-      if (nonDealer.text == null || nonDealer.text.isEmpty) {
-        userJob = "dealer";
-      } else {
-        userJob = nonDealer.text.toString();
-      }
-      var url = Uri.parse('http://localhost/signUp.php');
-      if (status == "Member") {
-        var response = await http.post(url, body: {
-          'username': unameCont.text.toString(),
-          'password': passCont.text.toString(),
-          'email': emailCont.text.toString(),
-          'noHP': noHPCont.text.toString(),
-          'alamat': alamatCont.text.toString(),
-          'prov': provCont.text.toString(),
-          'kabKota': kabKotaCont.text.toString(),
-          'kec': kecCont.text.toString(),
-          'kel': kelCont.text.toString(),
-          'kodPos': kodPosCont.text.toString(),
-          'userJob': userJob,
-          'createdDate': currentTime.toString(),
-          'userStat': status,
-        });
-        if (response.statusCode == 200) {
-          var data = jsonDecode(response.body);
-          bool success = data['success'];
+  void addUser(String status) async {
+    if (status == "admin") {
+      var url = Uri.parse('http://localhost/adminAddUser.php');
+      var response = await http.post(url, body: {
+        'username': unameCont.text.toString(),
+        'password': passCont.text.toString(),
+        'email': emailCont.text.toString(),
+        'noHP': noHPCont.text.toString(),
+        'alamat': alamatCont.text.toString(),
+        'prov': provCont.text.toString(),
+        'kabKota': kabKotaCont.text.toString(),
+        'kec': kecCont.text.toString(),
+        'kel': kelCont.text.toString(),
+        'kodPos': kodPosCont.text.toString(),
+        'userJob': "",
+        'createdDate': currentTime.toString(),
+        'userStat': "1",
+      });
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
 
-          if (success) {
-            Navigator.of(context)
-                .push(MaterialPageRoute(builder: (context) => Login()));
-          }
-        }
-      } else {
-        var response = await http.post(url, body: {
-          'username': "",
-          'password': "",
-          'email': "",
-          'noHP': "",
-          'alamat': "",
-          'prov': "",
-          'kabKota': "",
-          'kec': "",
-          'kel': "",
-          'kodPos': "",
-          'userJob': "",
-          'createdDate': currentTime.toString(),
-          'userStat': status,
-        });
-        if (response.statusCode == 200) {
-          var data = jsonDecode(response.body);
-          bool success = data['success'];
-
-          if (success) {
-            Navigator.of(context)
-                .push(MaterialPageRoute(builder: (context) => userHomeScreen(uname: "",)));
-          }
+        if (data['success']) {
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => adminUserList(
+                    username: widget.username,
+                  )));
         }
       }
-    } catch (error) {
-      print('Error: $error');
+    } else if (status == "salesRep") {
+      var url = Uri.parse('http://localhost/addUser.php');
+      var response = await http.post(url, body: {
+        'username': unameCont.text.toString(),
+        'password': passCont.text.toString(),
+        'email': emailCont.text.toString(),
+        'noHP': noHPCont.text.toString(),
+        'alamat': alamatCont.text.toString(),
+        'prov': provCont.text.toString(),
+        'kabKota': kabKotaCont.text.toString(),
+        'kec': kecCont.text.toString(),
+        'kel': kelCont.text.toString(),
+        'kodPos': kodPosCont.text.toString(),
+        'userJob': "",
+        'createdDate': currentTime.toString(),
+        'userStat': "2",
+      });
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+
+        if (data['success']) {
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => adminUserList(
+                    username: widget.username,
+                  )));
+        }
+      }
     }
   }
 
@@ -126,16 +132,6 @@ class signUpState extends State<signUpForm> {
       return 'This field is required';
     }
     return null;
-  }
-
-  String? validatePassword(String? pass) {
-    RegExp regex =
-        RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$');
-    if (pass == null || pass.isEmpty) {
-      return 'This field is required';
-    } else if (!regex.hasMatch(pass.trim())) {
-      return 'Password memerlukan huruf besar, huruf kecil, angka, dan karakter spesial';
-    }
   }
 
   String? validateRePass(String? pass) {
@@ -188,13 +184,6 @@ class signUpState extends State<signUpForm> {
       autovalidateMode: AutovalidateMode.always,
       child: Column(
         children: <Widget>[
-          Padding(
-            padding: EdgeInsets.only(bottom: 16.0),
-            child: Image.network(
-              'assets/logo.jpg',
-              height: 80.0,
-            ),
-          ),
           Row(
             children: <Widget>[
               IconTheme(
@@ -235,31 +224,7 @@ class signUpState extends State<signUpForm> {
                     contentPadding:
                         EdgeInsets.symmetric(vertical: 5, horizontal: 10),
                   ),
-                  validator: validatePassword,
-                  obscureText: true,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.0),
-          Row(
-            children: <Widget>[
-              IconTheme(
-                data: IconThemeData(color: Color.fromRGBO(29, 133, 3, 1)),
-                child: Icon(Icons.lock),
-              ),
-              Expanded(
-                child: TextFormField(
-                  controller: rePassCont,
-                  decoration: InputDecoration(
-                    labelText: 'Re-type Password',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                    contentPadding:
-                        EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                  ),
-                  validator: validateRePass,
+                  validator: validateField,
                   obscureText: true,
                 ),
               ),
@@ -454,47 +419,33 @@ class signUpState extends State<signUpForm> {
           Column(
             children: <Widget>[
               ListTile(
-                title: const Text('Saya seorang dealer'),
+                title: const Text('Admin'),
                 leading: Radio<dealerStat>(
-                  value: dealerStat.dealer,
+                  value: dealerStat.admin,
                   groupValue: status,
                   fillColor: MaterialStateColor.resolveWith(
                       (states) => Color.fromRGBO(29, 133, 3, 1)),
                   onChanged: (dealerStat? value) {
                     setState(() {
                       status = value;
-                      showTextField = false;
+                      print(status);
                     });
                   },
                 ),
               ),
               ListTile(
-                title: const Text('Saya bukan seorang dealer'),
+                title: const Text('Sales Rep'),
                 leading: Radio<dealerStat>(
-                  value: dealerStat.nonDealer,
+                  value: dealerStat.salesRep,
                   groupValue: status,
                   fillColor: MaterialStateColor.resolveWith(
                       (states) => Color.fromRGBO(29, 133, 3, 1)),
                   onChanged: (dealerStat? value) {
                     setState(() {
                       status = value;
-                      showTextField = true;
+                      print(status);
                     });
                   },
-                ),
-              ),
-              Visibility(
-                visible: showTextField,
-                child: TextFormField(
-                  controller: nonDealer,
-                  decoration: InputDecoration(
-                    labelText: 'Bidang pekerjaan anda',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                    contentPadding:
-                        EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                  ),
                 ),
               ),
             ],
@@ -506,14 +457,19 @@ class signUpState extends State<signUpForm> {
                 width: 140,
                 child: ElevatedButton(
                   onPressed: () {
-                    setState(() {
-                      areFieldsEmpty = checkFieldsEmpty();
-                    });
-                    if (!areFieldsEmpty) {
-                      signIn("Member");
+                    if (formKey.currentState!.validate()) {
+                      if (status == dealerStat.admin) {
+                        addUser('admin');
+                      } else if (status == dealerStat.salesRep) {
+                        addUser('salesRep');
+                      } 
+                    } else {
+                      setState(() {
+                        areFieldsEmpty = true;
+                      });
                     }
                   },
-                  child: Text('Sign In'),
+                  child: Text('Add New User'),
                   style: ElevatedButton.styleFrom(
                     primary: Color.fromRGBO(29, 133, 3, 1),
                     shape: RoundedRectangleBorder(
@@ -529,22 +485,6 @@ class signUpState extends State<signUpForm> {
                   style: TextStyle(color: Colors.red),
                 ),
             ],
-          ),
-          SizedBox(height: 20,),
-          SizedBox(
-            width: 140,
-            child: ElevatedButton(
-              onPressed: () {
-                signIn("Guest");
-              },
-              child: Text('Sign In as Guest'),
-              style: ElevatedButton.styleFrom(
-                primary: Color.fromRGBO(29, 133, 3, 1),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(0),
-                ),
-              ),
-            ),
           ),
         ],
       ),

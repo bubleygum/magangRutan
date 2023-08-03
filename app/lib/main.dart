@@ -1,3 +1,5 @@
+import 'package:app/admin_home.dart';
+import 'package:app/cs_chatList.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app/home.dart';
@@ -9,26 +11,16 @@ void main() {
 }
 
 class RutanApp extends StatelessWidget {
-  final AuthBloc authBloc = AuthBloc();
-
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AuthBloc>(
-      create: (context) => authBloc,
-      child: MaterialApp(
-        initialRoute: '/',
-        onGenerateRoute: (settings) {
-          if (settings.name == '/login') {
-            return MaterialPageRoute(
-              builder: (context) => Login(),
-              settings: settings,
-            );
-          }
-          return null;
-        },
-        routes: {
-          '/': (context) => AppNavigator(),
-        },
+    return MaterialApp(
+      home: MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthBloc>(
+            create: (context) => AuthBloc(),
+          ),
+        ],
+        child: AppNavigator(),
       ),
     );
   }
@@ -46,14 +38,23 @@ class AppNavigator extends StatelessWidget {
         }
         return Navigator(
           pages: [
-            if (isLoggedIn)
+            if (isLoggedIn && authBloc.status == "1") ...[
               MaterialPage(
-                child: Home(username: authBloc.username),
+                child: adminHome(username: authBloc.username),
               )
-            else
+            ] else if (isLoggedIn && authBloc.status == "2") ...[
+              MaterialPage(
+                child: csChatList(username: authBloc.username),
+              )
+            ] else if (isLoggedIn && authBloc.status == "3") ...[
+              MaterialPage(
+                child: userHomeScreen(uname: authBloc.username),
+              )
+            ]else ...[
               MaterialPage(
                 child: Login(),
               ),
+            ]
           ],
           onPopPage: (route, result) {
             authBloc.add(AuthEvent.logout);

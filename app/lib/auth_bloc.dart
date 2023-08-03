@@ -5,7 +5,7 @@ enum AuthEvent { login, logout, checkLogin }
 
 class AuthBloc extends Bloc<AuthEvent, bool> {
   late String username;
-
+  late String status;
   AuthBloc() : super(false) {
     add(AuthEvent.checkLogin); 
   }
@@ -25,6 +25,7 @@ class AuthBloc extends Bloc<AuthEvent, bool> {
         final SharedPreferences prefs = await SharedPreferences.getInstance();
         final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
         username = prefs.getString('username') ?? '';
+        status = prefs.getString('status') ?? '';
         yield isLoggedIn;
         break;
     }
