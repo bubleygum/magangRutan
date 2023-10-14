@@ -160,25 +160,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: FontAwesomeIcons.ad,
                     label: 'Promosi',
                     onPressed: () {
-                      // if (status != "1") {
-                      //   showDialog(
-                      //     context: context,
-                      //     builder: (BuildContext context) {
-                      //       return AlertDialog(
-                      //         title: Text(
-                      //             'Tidak bisa mengakses Promosi, anda bukan Admin'),
-                      //         actions: <Widget>[
-                      //           ElevatedButton(
-                      //             onPressed: () {
-                      //               Navigator.pop(context);
-                      //             },
-                      //             child: Text('Okay'),
-                      //           ),
-                      //         ],
-                      //       );
-                      //     },
-                      //   );
-                      // } else {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -187,9 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       );
-                    }
-                    // },
-                    ),
+                    }),
                 _buildGridItem(
                   icon: Icons.home,
                   label: 'List User',
@@ -208,25 +187,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: Icons.message,
                     label: 'Messages',
                     onPressed: () {
-                      // if (status == "1") {
-                      //   showDialog(
-                      //     context: context,
-                      //     builder: (BuildContext context) {
-                      //       return AlertDialog(
-                      //         title: Text(
-                      //             'Tidak bisa mengakses Chat, anda bukan Customer Service'),
-                      //         actions: <Widget>[
-                      //           ElevatedButton(
-                      //             onPressed: () {
-                      //               Navigator.pop(context);
-                      //             },
-                      //             child: Text('Okay'),
-                      //           ),
-                      //         ],
-                      //       );
-                      //     },
-                      //   );
-                      // } else {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -236,7 +196,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       );
                     }
-                    // },
                     ),
               ],
             ),

@@ -7,11 +7,19 @@ import 'dart:convert';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:app/notification_service.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class chat extends StatefulWidget {
   final String uname;
-
-  const chat({required this.uname, Key? key}) : super(key: key);
+  final String status;
+  final String product;
+  const chat(
+      {required this.uname,
+      required this.status,
+      required this.product,
+      Key? key})
+      : super(key: key);
 
   @override
   _ChatState createState() => _ChatState();
@@ -53,8 +61,7 @@ class _ChatState extends State<chat> {
         if (jsonData.containsKey('data') &&
             jsonData['data'] is List &&
             jsonData['data'].length > 0) {
-          var data =
-              jsonData['data'][0]; // Access the first element of the array
+          var data = jsonData['data'][0];
           setState(() {
             userData = Map<String, dynamic>.from(data);
           });
@@ -106,7 +113,10 @@ class _ChatState extends State<chat> {
       print("User data kosong :(");
     } else {
       var url = Uri.parse('http://localhost/chat.php');
-      final response = await http.post(url, body: {'uId': userData["UserId"]});
+      final response = await http.post(url, body: {
+        'uId': userData["UserId"],
+        'userStat': userData["StatusUser"]
+      });
       // print(jsonDecode(response.body));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -153,6 +163,35 @@ class _ChatState extends State<chat> {
   }
 
   void sendFAQAnalytics(int faqId) {}
+  void showNotification(String message, String sender) {
+    final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'your_channel_id',
+      'your_channel_name',
+      'your_channel_description',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    const IOSNotificationDetails iOSPlatformChannelSpecifics =
+        IOSNotificationDetails();
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+        android: androidPlatformChannelSpecifics,
+        iOS: iOSPlatformChannelSpecifics);
+
+    // Customize your notification title and body here based on the sender and message
+    String notificationTitle = sender == widget.uname ? 'You' : sender;
+    String notificationBody = message;
+
+    flutterLocalNotificationsPlugin.show(
+      0, // Notification ID
+      notificationTitle, // Notification title
+      notificationBody, // Notification body
+      platformChannelSpecifics,
+      payload: 'additional_data_here', // You can pass additional data here
+    );
+  }
 
   void sendMessage(String message, String sender) async {
     var url = Uri.parse('http://localhost/chat.php');
@@ -167,6 +206,7 @@ class _ChatState extends State<chat> {
       final data = jsonDecode(response.body);
       if (data['success']) {
         print("Message sent");
+        showNotification(message, sender);
       }
     } else {
       print('Request failed with status: ${response.statusCode}');
@@ -239,6 +279,10 @@ class _ChatState extends State<chat> {
   }
   @override
   Widget build(BuildContext context) {
+    if (widget.product != "false") {
+      sendMessage("Saya mau bertanya mengenai, Product: ${widget.product}",
+          widget.uname);
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -259,103 +303,6 @@ class _ChatState extends State<chat> {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: FractionallySizedBox(
-                widthFactor: 0.65,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Color.fromRGBO(29, 133, 3, 0.3),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  padding: EdgeInsets.all(8.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Text(
-                          'FAQ',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 8.0),
-                      Divider(
-                        color: Color.fromRGBO(29, 133, 3, 1),
-                        thickness: 2.0,
-                      ),
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        itemCount: faqList.length,
-                        itemBuilder: (context, index) {
-                          final faq = faqList[index];
-                          final dropdownState = dropdownStates[index];
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    dropdownStates[index] = !dropdownState;
-                                  });
-                                },
-                                child: Container(
-                                  // color: dropdownState ? Color.fromRGBO(255, 255, 255, 0.5) : null,
-                                  child: Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: Text(
-                                      faq.question,
-                                      style: TextStyle(
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              if (dropdownState)
-                                Container(
-                                  padding: EdgeInsets.all(8.0),
-                                  child: Text(
-                                    faq.answer,
-                                    style: TextStyle(
-                                        color: Colors.black, fontSize: 15),
-                                  ),
-                                ),
-                              SizedBox(height: 8.0),
-                              Divider(
-                                color: Color.fromRGBO(29, 133, 3, 1),
-                                thickness: 1.0,
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                      Center(
-                        child: ElevatedButton(
-                          onPressed: isButtonDisabled ? null : hubungiKamiBtn,
-                          child: Text('Hubungkan dengan sales'),
-                          style: ElevatedButton.styleFrom(
-                            primary: Color.fromRGBO(29, 133, 3, 0.3),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(0),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
           Expanded(
             child: isLoading
                 ? Center(
@@ -393,33 +340,6 @@ class _ChatState extends State<chat> {
                     },
                   ),
           ),
-          // Padding(
-          //   padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          //   child: CarouselSlider(
-          //     options: CarouselOptions(
-          //       height: 200,
-          //       enableInfiniteScroll: false,
-          //       onPageChanged: (index, reason) {
-          //         // Callback when the carousel page changes
-          //       },
-          //     ),
-          //     items: faqList.map((faq) {
-          //       return Builder(
-          //         builder: (BuildContext context) {
-          //           return GestureDetector(
-          //             onTap: () => navigateToFAQDetail(faq),
-          //             child: Card(
-          //               child: Container(
-          //                 padding: EdgeInsets.all(8.0),
-          //                 child: Text(faq.question),
-          //               ),
-          //             ),
-          //           );
-          //         },
-          //       );
-          //     }).toList(),
-          //   ),
-          // ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Container(
@@ -437,15 +357,20 @@ class _ChatState extends State<chat> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Divider(
+                    color: Color.fromRGBO(29, 133, 3, 1),
+                    thickness: 2.0,
+                  ),
+                  SizedBox(height: 8.0),
                   CarouselSlider(
                     options: CarouselOptions(
-                      height: 200,
-                      enableInfiniteScroll: false,
-                      enlargeCenterPage: true,
-                      viewportFraction: 0.85,
-                      onPageChanged: (index, reason) {
-                        // Callback when the carousel page changes
-                      },
+                      height: 200.0,
+                      autoPlay: true,
+                      autoPlayInterval: Duration(seconds: 3),
+                      autoPlayAnimationDuration: Duration(milliseconds: 800),
+                      autoPlayCurve: Curves.fastOutSlowIn,
+                      aspectRatio: 2.0,
+                      onPageChanged: (index, reason) {},
                     ),
                     items: faqList.map((faq) {
                       return Builder(
@@ -453,11 +378,12 @@ class _ChatState extends State<chat> {
                           return GestureDetector(
                             onTap: () => navigateToFAQDetail(faq),
                             child: Card(
-                              margin: EdgeInsets.symmetric(horizontal: 8.0),
+                              margin: EdgeInsets.symmetric(horizontal: 5.0),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8.0),
                               ),
                               child: Container(
+                                width: MediaQuery.of(context).size.width * 0.9,
                                 padding: EdgeInsets.all(16.0),
                                 child: Text(
                                   faq.question,
@@ -533,14 +459,20 @@ class _ChatState extends State<chat> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => wishlist(username: widget.uname)),
+                    builder: (context) => wishlist(
+                          username: widget.uname,
+                          status: widget.status,
+                        )),
               );
               break;
             case 1:
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => userHomeScreen(uname: widget.uname)),
+                    builder: (context) => userHomeScreen(
+                          uname: widget.uname,
+                          status: widget.status,
+                        )),
               );
               break;
             case 2:
@@ -548,8 +480,9 @@ class _ChatState extends State<chat> {
                 context,
                 MaterialPageRoute(
                     builder: (context) => chat(
-                          uname: widget.uname,
-                        )),
+                        uname: widget.uname,
+                        status: widget.status,
+                        product: "false")),
               );
               break;
           }

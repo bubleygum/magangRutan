@@ -10,8 +10,9 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 class prodDetail extends StatefulWidget {
   final String data;
   final String uname;
-
-  const prodDetail({required this.data, required this.uname, Key? key})
+  final String status;
+  const prodDetail(
+      {required this.data, required this.uname, required this.status, Key? key})
       : super(key: key);
 
   @override
@@ -146,17 +147,18 @@ class prodDetailState extends State<prodDetail> {
     final prodName = prodData['ProdName'] ?? '';
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          prodName,
-          style: TextStyle(
-            color: Color.fromRGBO(61, 133, 3, 1),
-            fontWeight: FontWeight.bold,
+        title: Center(
+          child: Text(
+            "Detail Produk",
+            style: TextStyle(
+              color: Colors.black,
+            ),
           ),
         ),
         backgroundColor: Colors.white,
         elevation: 4,
         iconTheme: IconThemeData(
-          color: Color.fromRGBO(61, 133, 3, 1),
+          color: Colors.black,
         ),
         actions: [
           IconButton(
@@ -170,6 +172,7 @@ class prodDetailState extends State<prodDetail> {
                 MaterialPageRoute(
                     builder: (context) => wishlist(
                           username: widget.uname,
+                          status: widget.status,
                         )),
               );
             },
@@ -177,155 +180,163 @@ class prodDetailState extends State<prodDetail> {
         ],
       ),
       body: SingleChildScrollView(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                SizedBox(
-                  height: 20,
-                ),
-                Text(
-                  prodName,
-                  style: TextStyle(
-                    color: Color.fromRGBO(61, 133, 3, 1),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
+        //   child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              SizedBox(
+                height: 20,
+              ),
+              if (photos.isNotEmpty)
+                CarouselSlider(
+                  options: CarouselOptions(
+                    height: 250,
+                    autoPlay: true,
                   ),
-                ),
-                SizedBox(
-                  height: 20,
-                ),
-                if (photos.isNotEmpty)
-                  CarouselSlider(
-                    options: CarouselOptions(
-                      height: 200,
-                      autoPlay: true,
-                    ),
-                    items: photos.asMap().entries.map<Widget>((entry) {
-                      final index = entry.key;
-                      final photo = entry.value;
-                      final picUrl = photo['UrlPhoto'];
-                      return Builder(
-                        builder: (BuildContext context) {
-                          return Stack(
-                            children: [
-                              Image.network(
-                                picUrl,
-                                fit: BoxFit.cover,
-                              ),
-                              Positioned(
-                                bottom: 8,
-                                right: 8,
-                                child: Container(
-                                  padding: EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.6),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    '${index + 1}',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                  items: photos.asMap().entries.map<Widget>((entry) {
+                    final index = entry.key;
+                    final photo = entry.value;
+                    final picUrl = photo['UrlPhoto'];
+                    return Builder(
+                      builder: (BuildContext context) {
+                        return Stack(
+                          children: [
+                            Image.network(
+                              picUrl,
+                              fit: BoxFit.cover,
+                            ),
+                            Positioned(
+                              bottom: 8,
+                              right: 8,
+                              child: Container(
+                                padding: EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.6),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '${index + 1}',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
-                            ],
-                          );
-                        },
-                      );
-                    }).toList(),
-                  ),
-
-                SizedBox(
-                  height: 20,
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }).toList(),
                 ),
-                // Text(
-                //   "Deskripsi",
-                //   style: TextStyle(
-                //     color: Color.fromRGBO(29, 133, 3, 1),
-                //     fontSize: 20,
-                //     fontWeight: FontWeight.bold,
-                //   ),
-                // ),
-                Center(
-                  child: RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      text: '${prodData['Description']}',
+              SizedBox(
+                height: 20,
+              ),
+              Text(
+                prodName,
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
+              Text(
+                "Harga",
+                style: TextStyle(
+                  color: Color.fromRGBO(61, 133, 3, 1),
+                  fontSize: 20,
+                ),
+              ),
+              SizedBox(
+                height: 20,
+              ),
+              RichText(
+                textAlign: TextAlign.start,
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'Deskripsi Produk',
                       style: TextStyle(
                         color: Colors.black,
-                        fontSize: 20,
+                        fontWeight:
+                            FontWeight.bold, 
                       ),
                     ),
-                  ),
-                ),
-                SizedBox(
-                  height: 20,
-                ),
-                Column(
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      // width: btnWidth,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          await addToWishlist(
-                            prodName,
-                            photos.isNotEmpty ? photos[0]['UrlPhoto'] : null,
-                          );
-                        },
-                        child: Text(
-                          "Masukkan ke Wishlist",
-                          style: TextStyle(fontSize: 15),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          primary: Color.fromRGBO(29, 133, 3, 1),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(0),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Container(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => chat(
-                                      uname: widget.uname,
-                                    )),
-                          );
-                        },
-                        child: Text(
-                          "Hubungi Sales Kami",
-                          style: TextStyle(fontSize: 15),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          primary: Color.fromRGBO(29, 133, 3, 1),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(0),
-                          ),
-                        ),
+                    TextSpan(
+                      text: '\n${prodData['Description']}',
+                      style: TextStyle(
+                        color: Colors.black,
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              SizedBox(
+                height: 20,
+              ),
+              Column(
+                children: [
+                  Container(
+                    // width: double.infinity,
+                    // width: btnWidth,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await addToWishlist(
+                          prodName,
+                          photos.isNotEmpty ? photos[0]['UrlPhoto'] : null,
+                        );
+                      },
+                      child: Text(
+                        "Masukkan ke Wishlist",
+                        style: TextStyle(fontSize: 15),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        primary: Color.fromRGBO(29, 133, 3, 1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(0),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  Container(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => chat(
+                                  uname: widget.uname,
+                                  status: widget.status,
+                                  product: prodData['ProdCode'])),
+                        );
+                      },
+                      child: Text(
+                        "Hubungi Sales Kami",
+                        style: TextStyle(fontSize: 15),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        primary: Color.fromRGBO(29, 133, 3, 1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(0),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
+      // ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         onTap: (int index) {
@@ -334,14 +345,20 @@ class prodDetailState extends State<prodDetail> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => wishlist(username: widget.uname)),
+                    builder: (context) => wishlist(
+                          username: widget.uname,
+                          status: widget.status,
+                        )),
               );
               break;
             case 1:
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => userHomeScreen(uname: widget.uname)),
+                    builder: (context) => userHomeScreen(
+                          uname: widget.uname,
+                          status: widget.status,
+                        )),
               );
               break;
             case 2:
@@ -349,8 +366,9 @@ class prodDetailState extends State<prodDetail> {
                 context,
                 MaterialPageRoute(
                     builder: (context) => chat(
-                          uname: widget.uname,
-                        )),
+                        uname: widget.uname,
+                        status: widget.status,
+                        product: "false")),
               );
               break;
           }

@@ -1,14 +1,18 @@
-import 'package:app/admin_home.dart';
-import 'package:app/cs_chatList.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app/home.dart';
 import 'package:app/login.dart';
 import 'package:app/auth_bloc.dart';
-
-void main() {
+import 'notification_service.dart';
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService().init();
   runApp(RutanApp());
 }
+// void main() {
+//   runApp(RutanApp());
+// }
 
 class RutanApp extends StatelessWidget {
   @override
@@ -40,17 +44,21 @@ class AppNavigator extends StatelessWidget {
           pages: [
             if (isLoggedIn && authBloc.status == "1") ...[
               MaterialPage(
-                child: adminHome(username: authBloc.username),
+                child: userHomeScreen(uname: authBloc.username, status: "1"),
               )
             ] else if (isLoggedIn && authBloc.status == "2") ...[
               MaterialPage(
-                child: csChatList(username: authBloc.username),
+                child: userHomeScreen(uname: authBloc.username, status: "2"),
               )
             ] else if (isLoggedIn && authBloc.status == "3") ...[
               MaterialPage(
-                child: userHomeScreen(uname: authBloc.username),
+                child: userHomeScreen(uname: authBloc.username, status: "3"),
               )
-            ]else ...[
+            ] else if (isLoggedIn && authBloc.status == "4") ...[
+              MaterialPage(
+                child: userHomeScreen(uname: authBloc.username, status: "4"),
+              )
+            ] else ...[
               MaterialPage(
                 child: Login(),
               ),

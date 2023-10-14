@@ -1,46 +1,173 @@
 import 'package:app/admin_home.dart';
 import 'package:app/admin_promoDetail.dart';
 import 'package:app/admin_chatList.dart';
+import 'package:app/chat.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class notif extends StatefulWidget {
   final String username;
-
-  const notif({required this.username, Key? key}) : super(key: key);
+  final String status;
+  const notif({required this.username, required this.status, Key? key})
+      : super(key: key);
   @override
-  State<notif> createState() => notifState(uname: username);
+  State<notif> createState() => notifState(uname: username, status: status);
 }
 
 class notifState extends State<notif> {
   final String uname;
-
-  notifState({required this.uname, Key? key});
-  List<Map<String, dynamic>> promoListData = [];
+  final String status;
+  notifState({required this.uname, required this.status, Key? key});
+  List<Map<String, dynamic>> chatNotifData = [];
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
     super.initState();
-    fetchPromoList();
+    initializeNotifications();
+    getUserData();
+    getUserData().then((_) {
+      fetchChatNotif();
+    });
   }
 
-  Future<void> fetchPromoList() async {
-    final response = await http.post(
-      Uri.parse('http://localhost/adminPromoList.php'),
-      body: {'uname': uname},
+  void initializeNotifications() async {
+    final AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('app_icon');
+
+    final IOSInitializationSettings initializationSettingsIOS =
+        IOSInitializationSettings(
+      requestSoundPermission: false,
+      requestBadgePermission: false,
+      requestAlertPermission: false,
     );
+
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
+
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
+  Map<String, dynamic> userData = {};
+  Future<void> getUserData() async {
+    final response = await http.post(
+        Uri.parse('http://localhost/getUserData.php'),
+        body: {'username': uname});
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['success']) {
-        setState(() {
-          promoListData = List<Map<String, dynamic>>.from(data['data']);
-        });
+      final jsonData = jsonDecode(response.body);
+      print(jsonData);
+      if (jsonData['success']) {
+        if (jsonData.containsKey('data') &&
+            jsonData['data'] is List &&
+            jsonData['data'].length > 0) {
+          var data = jsonData['data'][0];
+          setState(() {
+            userData = Map<String, dynamic>.from(data);
+          });
+          print(userData["UserId"]);
+        } else {
+          print('Invalid data format in the API response');
+        }
+      } else {
+        print(jsonData['message']);
       }
     } else {
-      throw Exception('Failed to fetch wishlist data');
+      throw Exception('Failed to fetch user data');
     }
+  }
+
+  // Future<void> fetchChatNotif() async {
+  //   final response = await http.post(
+  //     Uri.parse('http://localhost/chatNotif.php'),
+  //     body: {'UserId': userData["UserId"], 'userStat': userData["StatusUser"]},
+  //   );
+  //   if (response.statusCode == 200) {
+  //     final data = jsonDecode(response.body);
+  //     if (data['success']) {
+  //       setState(() {
+  //         chatNotifData = List<Map<String, dynamic>>.from(data['data']);
+  //       });
+  //     }
+  //   } else {
+  //     throw Exception('Failed to fetch wishlist data');
+  //   }
+  // }
+
+  // Future<void> fetchChatNotif() async {
+  //   final response = await http.post(
+  //     Uri.parse('http://localhost/chatNotif.php'),
+  //     body: {'UserId': userData["UserId"], 'userStat': userData["StatusUser"]},
+  //   );
+  //   if (response.statusCode == 200) {
+  //     final data = jsonDecode(response.body);
+  //     if (data['success']) {
+  //       setState(() {
+  //         chatNotifData = List<Map<String, dynamic>>.from(data['data']);
+  //       });
+
+  //       // Display push notification for each new notification
+  //       for (var notification in chatNotifData) {
+  //         final title = notification['title'];
+  //         final body = notification['body'];
+  //         displayPushNotification(title, body);
+  //       }
+  //     }
+  //   } else {
+  //     throw Exception('Failed to fetch wishlist data');
+  //   }
+  // }
+
+Future<void> fetchChatNotif() async {
+  final response = await http.post(
+    Uri.parse('http://localhost/chatNotif.php'),
+    body: {'UserId': userData["UserId"], 'userStat': userData["StatusUser"]},
+  );
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    if (data['success']) {
+      setState(() {
+        chatNotifData = List<Map<String, dynamic>>.from(data['data']);
+      });
+
+      // Display push notification for each new notification
+      for (var notification in chatNotifData) {
+        final title = notification['title']; // You need to modify this part based on your PHP response
+        final body = notification['body']; // You need to modify this part based on your PHP response
+        displayPushNotification(title, body);
+      }
+    }
+  } else {
+    throw Exception('Failed to fetch chat notification data');
+  }
+}
+
+  int notificationId = 0; // Initialize a counter
+
+  void displayPushNotification(String title, String body) async {
+    final AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'test',
+      'test',
+      'test',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    final NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.show(
+      notificationId++, 
+      title,
+      body,
+      platformChannelSpecifics,
+    );
   }
 
   @override
@@ -48,7 +175,7 @@ class notifState extends State<notif> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Promotion List",
+          "Notif List",
           style: TextStyle(
             color: Color.fromRGBO(61, 133, 3, 1),
             fontWeight: FontWeight.bold,
@@ -60,74 +187,12 @@ class notifState extends State<notif> {
           color: Color.fromRGBO(61, 133, 3, 1),
         ),
       ),
-      body: ListView.builder(
-        itemCount: promoListData.length,
-        itemBuilder: (context, index) {
-          final item = promoListData[index];
-          final promoName = item['PromoName'];
-          final idPromo = item['IdPromo'];
-          final descPromo = item['DescPromo'];
-          final keterangan = item['Keterangan'];
-          final imgPromo = item['ImgPromo'];
-          final releaseDate = item['ReleaseDate'];
-          final createdDate = item['CreatedDate'];
-          final createdBy = item['CreatedBy'];
-          final endDate = item['endDate'];
-          final status;
-          if (item['Status'] == 1) {
-            status = "aktif";
-          } else {
-            status = "tidak aktif";
-          }
-          return Card(
-            margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-            elevation: 4,
-            child: Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    promoName,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text("Status: $status"),
-                  Text("Created Date: $createdDate"),
-                  SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => adminPromoDetail(
-                            username: uname,
-                            idPromo: idPromo,
-                            namaPromo: promoName,
-                            descPromo: descPromo,
-                            keterangan: keterangan,
-                            imgPromo: imgPromo,
-                            releaseDate: releaseDate,
-                            createdBy: createdBy,
-                            createdDate: createdDate,
-                            endDate: endDate,
-                          ),
-                        ),
-                      );
-                    },
-                    child: Text("Upload Gambar"),
-                    style: ElevatedButton.styleFrom(
-                      primary: Color.fromRGBO(29, 133, 3, 1),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
+      body: ListView(
+        children: [
+          _buildCategoryListView("Chat", chatNotifData),
+          // _buildCategoryListView("Product", productNotifData),
+          // _buildCategoryListView("Promotion", promotionNotifData),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -139,6 +204,7 @@ class notifState extends State<notif> {
                 MaterialPageRoute(
                   builder: (context) => notif(
                     username: uname,
+                    status: status,
                   ),
                 ),
               );
@@ -187,6 +253,71 @@ class notifState extends State<notif> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCategoryListView(
+      String category, List<Map<String, dynamic>> data) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            category,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        if (data.isEmpty)
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              "No new message",
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+            ),
+          )
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: data.length,
+            itemBuilder: (context, index) {
+              final item = data[index];
+              final custName = item['FullName'];
+              return Card(
+                margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                elevation: 4,
+                child: Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: ListTile(
+                    title: Text(custName),
+                    trailing: TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => chat(
+                              uname: uname,
+                              status: status,
+                              product: "false",
+                            ),
+                          ),
+                        );
+                      },
+                      child: Text('Open'),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+      ],
     );
   }
 }

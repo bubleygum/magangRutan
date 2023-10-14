@@ -7,17 +7,17 @@ import 'package:app/chat.dart';
 
 class wishlist extends StatefulWidget {
   final String username;
-
-  wishlist({required this.username, Key? key}) : super(key: key);
+final String status;  
+  wishlist({required this.username, required this.status,Key? key}) : super(key: key);
 
   @override
-  State<wishlist> createState() => _WishlistState(uname: username);
+  State<wishlist> createState() => _WishlistState(uname: username, status: status);
 }
 
 class _WishlistState extends State<wishlist> {
   final String uname;
-
-  _WishlistState({required this.uname, Key? key});
+final String status;  
+  _WishlistState({required this.uname, required this.status,Key? key});
 
   List<Map<String, dynamic>> wishlistData = [];
 
@@ -166,14 +166,14 @@ class _WishlistState extends State<wishlist> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => wishlist(username: uname)),
+                    builder: (context) => wishlist(username: uname, status: status,)),
               );
               break;
             case 1:
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => userHomeScreen(uname: uname)),
+                    builder: (context) => userHomeScreen(uname: uname, status: status,)),
               );
               break;
             case 2:
@@ -182,6 +182,8 @@ class _WishlistState extends State<wishlist> {
                 MaterialPageRoute(
                     builder: (context) => chat(
                           uname: uname,
+                          status: status,
+                          product: "false"
                         )),
               );
               break;

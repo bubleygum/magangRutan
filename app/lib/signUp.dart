@@ -111,7 +111,7 @@ class signUpState extends State<signUpForm> {
 
           if (success) {
             Navigator.of(context)
-                .push(MaterialPageRoute(builder: (context) => userHomeScreen(uname: "",)));
+                .push(MaterialPageRoute(builder: (context) => userHomeScreen(uname: "",status: "3",)));
           }
         }
       }

@@ -29,7 +29,7 @@ class adminPromoListState extends State<adminPromoList> {
   Future<void> fetchPromoList() async {
     final response = await http.post(
       Uri.parse('http://localhost/adminPromoList.php'),
-      body: {'uname': uname},
+      body: {'UserId': uname},
     );
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);

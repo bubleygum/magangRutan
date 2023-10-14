@@ -8,8 +8,8 @@ import 'package:app/chat.dart';
 
 class tentangKami extends StatelessWidget {
   final String username;
-
-  const tentangKami({required this.username, Key? key}) : super(key: key);
+final String status;
+  const tentangKami({required this.username,required this.status, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +36,7 @@ class tentangKami extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => wishlist(username: username,)),
+                  MaterialPageRoute(builder: (context) => wishlist(username: username,status: status,)),
                 );
             },
           ),
@@ -50,19 +50,19 @@ class tentangKami extends StatelessWidget {
             case 0:
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => wishlist(username: username)),
+                MaterialPageRoute(builder: (context) => wishlist(username: username, status: status,)),
               );
               break;
             case 1:
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => userHomeScreen(uname: username)),
+                MaterialPageRoute(builder: (context) => userHomeScreen(uname: username, status: status,)),
               );
               break;
             case 2:
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => chat(uname: username,)),
+                MaterialPageRoute(builder: (context) => chat(uname: username,status: status,product: "false")),
               );
               break;
           }
