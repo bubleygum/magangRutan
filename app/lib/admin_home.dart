@@ -1,3 +1,5 @@
+import 'dart:js_util';
+import 'package:app/admin_addPromo.dart';
 import 'package:app/admin_promoList.dart';
 import 'package:app/admin_userList.dart';
 import 'package:app/admin_chatList.dart';
@@ -5,10 +7,13 @@ import 'package:app/login.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class adminHome extends StatelessWidget {
   final String username;
   const adminHome({required this.username, Key? key});
+
   Future<void> logout(BuildContext context) async {
     SharedPreferences.getInstance().then((prefs) {
       prefs.setBool('isLoggedIn', false);
@@ -25,15 +30,9 @@ class adminHome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Color selectedColor = Color.fromRGBO(29, 133, 3, 1);
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          "Admin Dashboard",
-          style: TextStyle(
-            color: Color.fromRGBO(61, 133, 3, 1),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
         leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
@@ -54,7 +53,14 @@ class adminHome extends StatelessWidget {
               FontAwesomeIcons.ad,
               color: Color.fromRGBO(29, 133, 3, 1),
             ),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => addPromo(username: username),
+                ),
+              );
+            },
           ),
         ],
         backgroundColor: Colors.white,
@@ -65,9 +71,19 @@ class adminHome extends StatelessWidget {
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
+        selectedItemColor: selectedColor,
         onTap: (int index) {
           switch (index) {
             case 0:
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => adminHome(username: username),
+                ),
+              );
+
+              break;
+            case 1:
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -77,15 +93,17 @@ class adminHome extends StatelessWidget {
                 ),
               );
               break;
-            case 1:
+            case 2:
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => adminHome(username: username),
+                  builder: (context) => adminUserList(
+                    username: username,
+                  ),
                 ),
               );
               break;
-            case 2:
+            case 3:
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -100,24 +118,31 @@ class adminHome extends StatelessWidget {
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: FaIcon(
-              FontAwesomeIcons.ad,
-              color: Color.fromRGBO(29, 133, 3, 1),
-            ),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: FaIcon(
               FontAwesomeIcons.home,
               color: Color.fromRGBO(29, 133, 3, 1),
             ),
-            label: '',
+            label: 'Beranda',
+          ),
+          BottomNavigationBarItem(
+            icon: FaIcon(
+              FontAwesomeIcons.ad,
+              color: Color.fromRGBO(130, 143, 161, 1),
+            ),
+            label: 'Promo',
+          ),
+          BottomNavigationBarItem(
+            icon: FaIcon(
+              FontAwesomeIcons.peopleGroup,
+              color: Color.fromRGBO(130, 143, 161, 1),
+            ),
+            label: 'List User',
           ),
           BottomNavigationBarItem(
             icon: FaIcon(
               FontAwesomeIcons.message,
-              color: Color.fromRGBO(29, 133, 3, 1),
+              color: Color.fromRGBO(130, 143, 161, 1),
             ),
-            label: '',
+            label: 'Messages',
           ),
         ],
       ),
@@ -139,64 +164,147 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final String uname;
-  // final String status;
-  // _HomeScreenState({required this.uname, required this.status, Key? key});
   _HomeScreenState({required this.uname, Key? key});
+  Future<String> fetchUserCount() async {
+    final response = await http.post(
+        Uri.parse('http://localhost/adminUserList.php'),
+        body: {"jumlah": "true"});
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        print(data['total_rows']);
+        return data['total_rows'];
+      } else {
+        throw Exception('Failed to fetch user count');
+      }
+    } else {
+      throw Exception('Failed to fetch user count');
+    }
+  }
+
+  Future<String> fetchPromoCount() async {
+    final response = await http.post(
+        Uri.parse('http://localhost/adminPromoList.php'),
+        body: {"jumlah": "true"});
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        print(data['total_rows']);
+        return data['total_rows'];
+      } else {
+        throw Exception('Failed to fetch user count');
+      }
+    } else {
+      throw Exception('Failed to fetch user count');
+    }
+  }
+
+  String? userId;
+  Map<String, dynamic> userData = {};
+  Future<void> getUserData() async {
+    // print("here" + uname);
+    final response = await http.post(
+        Uri.parse('http://localhost/getUserData.php'),
+        body: {'username': uname});
+    if (response.statusCode == 200) {
+      final jsonData = jsonDecode(response.body);
+      // print(response.body);
+
+      if (jsonData['success']) {
+        var data = jsonData['data'];
+        setState(() {
+          userData = jsonData;
+          userId = jsonData['data'][0]['UserId'].toString();
+        });
+      } else {
+        print(jsonData['message']);
+      }
+    } else {
+      throw Exception('Failed to fetch user data');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            SizedBox(
+              height: 20,
+            ),
+            Text(
+              'Welcome to the admin panel',
+              style: TextStyle(
+                color: Color(0xFF141719),
+                fontSize: 20,
+                fontFamily: 'Open Sans',
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              'Managing and organizing the site is easier',
+              style: TextStyle(
+                color: Color(0xFF818EA1),
+                fontSize: 14,
+                fontFamily: 'Open Sans',
+                fontWeight: FontWeight.w400,
+              ),
+            ),
             GridView.count(
               shrinkWrap: true,
-              crossAxisCount: 3,
+              crossAxisCount: 2,
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
               padding: EdgeInsets.all(10),
               children: <Widget>[
-                _buildGridItem(
-                    icon: FontAwesomeIcons.ad,
-                    label: 'Promosi',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => adminPromoList(
-                            username: uname,
-                          ),
-                        ),
+                FutureBuilder<String>(
+                  future: fetchUserCount(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      if (snapshot.hasError) {
+                        return Text('Error: ${snapshot.error}');
+                      }
+                      return _buildGridItem(
+                        label1: 'Jumlah User',
+                        label2: snapshot.data.toString(),
+                        imageAssetPath: 'btn5.png',
+                        onPressed: () {},
                       );
-                    }),
-                _buildGridItem(
-                  icon: Icons.home,
-                  label: 'List User',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => adminUserList(
-                          username: uname,
-                        ),
-                      ),
-                    );
+                    } else {
+                      return CircularProgressIndicator();
+                    }
                   },
                 ),
-                _buildGridItem(
-                    icon: Icons.message,
-                    label: 'Messages',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => adminChatList(
-                            username: uname,
-                          ),
-                        ),
+                FutureBuilder<String>(
+                  future: fetchPromoCount(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      if (snapshot.hasError) {
+                        return Text('Error: ${snapshot.error}');
+                      }
+                      return _buildGridItem(
+                        label1: 'Promosi',
+                        label2: snapshot.data.toString(),
+                        imageAssetPath: 'btn5.png',
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => addPromo(
+                                username: uname,
+                              ),
+                            ),
+                          );
+                        },
                       );
+                    } else {
+                      return CircularProgressIndicator();
                     }
-                    ),
+                  },
+                ),
               ],
             ),
           ],
@@ -205,42 +313,58 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildGridItem(
-      {required IconData icon,
-      required String label,
-      required VoidCallback onPressed}) {
+  Widget _buildGridItem({
+    required String imageAssetPath,
+    required String label1,
+    required String label2,
+    required VoidCallback onPressed,
+  }) {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: Offset(0, 3),
+        child: Card(
+          shape: RoundedRectangleBorder(
+            side: BorderSide(width: 1, color: Color(0xFFB2C0D4)),
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: IntrinsicHeight(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: EdgeInsets.all(10), // Adjust padding as needed
+                  child: Text(
+                    label1,
+                    style: TextStyle(
+                      color: Color(0xFF818EA1),
+                      fontSize: 14,
+                      fontFamily: 'Open Sans',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(10), // Adjust padding as needed
+                  child: Text(
+                    label2,
+                    style: TextStyle(
+                      color: Color(0xFF2B2B2B),
+                      fontSize: 32,
+                      fontFamily: 'Open Sans',
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Container(
+                  height: 50,
+                  padding: EdgeInsets.all(10),
+                  child: Image.asset(
+                    imageAssetPath,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 50,
-              color: Color.fromRGBO(29, 133, 3, 1),
-            ),
-            SizedBox(height: 10),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

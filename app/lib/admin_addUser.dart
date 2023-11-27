@@ -184,238 +184,274 @@ class addUserState extends State<addUserForm> {
       autovalidateMode: AutovalidateMode.always,
       child: Column(
         children: <Widget>[
-          Row(
+          Column(
             children: <Widget>[
-              IconTheme(
-                data: IconThemeData(color: Color.fromRGBO(29, 133, 3, 1)),
-                child: Icon(Icons.person),
-              ),
-              Expanded(
-                child: TextFormField(
-                  controller: unameCont,
-                  decoration: InputDecoration(
-                    labelText: 'Nama Lengkap',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                    contentPadding:
-                        EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                  ),
-                  validator: validateField,
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Nama Lengkap",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.left,
                 ),
+              ),
+              TextFormField(
+                controller: unameCont,
+                decoration: InputDecoration(
+                  hintText: 'Nama Lengkap',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25.0),
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(
+                          240, 240, 240, 1), // Set border color here
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Color.fromRGBO(
+                      240, 240, 240, 1), // Set text field background color here
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                ),
+                validator: validateField,
+              ),
+              SizedBox(height: 12.0),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Password",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+              TextFormField(
+                controller: passCont,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25.0),
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(240, 240, 240, 1),
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Color.fromRGBO(240, 240, 240, 1),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                ),
+                validator: validateField,
+                obscureText: true,
+              ),
+              SizedBox(height: 12.0),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Email",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+              TextFormField(
+                controller: emailCont,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25.0),
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(240, 240, 240, 1),
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Color.fromRGBO(240, 240, 240, 1),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                ),
+                validator: validateEmail,
+              ),
+              SizedBox(height: 12.0),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Phone Number",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+              TextFormField(
+                controller: noHPCont,
+                decoration: InputDecoration(
+                  labelText: 'Nomor HP',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25.0),
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(240, 240, 240, 1),
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Color.fromRGBO(240, 240, 240, 1),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                ),
+                keyboardType: TextInputType.number,
+                validator: validatePhone,
+              ),
+              SizedBox(height: 12.0),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Alamat",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+              TextFormField(
+                controller: alamatCont,
+                decoration: InputDecoration(
+                  labelText: 'Alamat',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25.0),
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(240, 240, 240, 1),
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Color.fromRGBO(240, 240, 240, 1),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                ),
+                validator: validateField,
+              ),
+              SizedBox(height: 12.0),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Provinsi",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+              TextFormField(
+                controller: provCont,
+                decoration: InputDecoration(
+                  labelText: 'Provinsi',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25.0),
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(240, 240, 240, 1),
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Color.fromRGBO(240, 240, 240, 1),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                ),
+                validator: validateField,
+              ),
+              SizedBox(height: 12.0),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Kabupaten / Kota",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+              TextFormField(
+                controller: kabKotaCont,
+                decoration: InputDecoration(
+                  labelText: 'Kabupaten / Kota',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25.0),
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(240, 240, 240, 1),
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Color.fromRGBO(240, 240, 240, 1),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                ),
+                validator: validateField,
+              ),
+              SizedBox(height: 12.0),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Kecamatan",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+              TextFormField(
+                controller: kecCont,
+                decoration: InputDecoration(
+                  labelText: 'Kecamatan',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25.0),
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(240, 240, 240, 1),
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Color.fromRGBO(240, 240, 240, 1),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                ),
+                validator: validateField,
+              ),
+              SizedBox(height: 12.0),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Kelurahan",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+              TextFormField(
+                controller: kelCont,
+                decoration: InputDecoration(
+                  labelText: 'Kelurahan',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25.0),
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(240, 240, 240, 1),
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Color.fromRGBO(240, 240, 240, 1),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                ),
+                validator: validateField,
+              ),
+              SizedBox(height: 12.0),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Kode Pos",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+              TextFormField(
+                controller: kodPosCont,
+                decoration: InputDecoration(
+                  labelText: 'Kode Pos',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25.0),
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(240, 240, 240, 1),
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Color.fromRGBO(240, 240, 240, 1),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                ),
+                validator: validateField,
               ),
             ],
           ),
-          SizedBox(height: 12.0),
-          Row(
-            children: <Widget>[
-              IconTheme(
-                data: IconThemeData(color: Color.fromRGBO(29, 133, 3, 1)),
-                child: Icon(Icons.lock),
-              ),
-              Expanded(
-                child: TextFormField(
-                  controller: passCont,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                    contentPadding:
-                        EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                  ),
-                  validator: validateField,
-                  obscureText: true,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.0),
-          Row(
-            children: <Widget>[
-              IconTheme(
-                data: IconThemeData(color: Color.fromRGBO(29, 133, 3, 1)),
-                child: Icon(Icons.mail),
-              ),
-              Expanded(
-                child: TextFormField(
-                  controller: emailCont,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                    contentPadding:
-                        EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                  ),
-                  validator: validateEmail,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.0),
-          Row(
-            children: <Widget>[
-              IconTheme(
-                data: IconThemeData(color: Color.fromRGBO(29, 133, 3, 1)),
-                child: Icon(Icons.phone_android),
-              ),
-              Expanded(
-                child: TextFormField(
-                  controller: noHPCont,
-                  decoration: InputDecoration(
-                    labelText: 'Nomor HP',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                    contentPadding:
-                        EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                  ),
-                  keyboardType: TextInputType.number,
-                  validator: validatePhone,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.0),
-          Row(
-            children: <Widget>[
-              IconTheme(
-                data: IconThemeData(color: Color.fromRGBO(29, 133, 3, 1)),
-                child: Icon(Icons.house),
-              ),
-              Expanded(
-                child: TextFormField(
-                  controller: alamatCont,
-                  decoration: InputDecoration(
-                    labelText: 'Alamat',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                    contentPadding:
-                        EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                  ),
-                  validator: validateField,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.0),
-          Row(
-            children: <Widget>[
-              IconTheme(
-                data: IconThemeData(color: Color.fromRGBO(29, 133, 3, 0)),
-                child: Icon(Icons.lock),
-              ),
-              Expanded(
-                child: TextFormField(
-                  controller: provCont,
-                  decoration: InputDecoration(
-                    labelText: 'Provinsi',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                    contentPadding:
-                        EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                  ),
-                  validator: validateField,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.0),
-          Row(
-            children: <Widget>[
-              IconTheme(
-                data: IconThemeData(color: Color.fromRGBO(29, 133, 3, 0)),
-                child: Icon(Icons.lock),
-              ),
-              Expanded(
-                child: TextFormField(
-                  controller: kabKotaCont,
-                  decoration: InputDecoration(
-                    labelText: 'Kabupaten / Kota',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                    contentPadding:
-                        EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                  ),
-                  validator: validateField,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.0),
-          Row(
-            children: <Widget>[
-              IconTheme(
-                data: IconThemeData(color: Color.fromRGBO(29, 133, 3, 0)),
-                child: Icon(Icons.lock),
-              ),
-              Expanded(
-                child: TextFormField(
-                  controller: kecCont,
-                  decoration: InputDecoration(
-                    labelText: 'Kecamatan',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                    contentPadding:
-                        EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                  ),
-                  validator: validateField,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.0),
-          Row(
-            children: <Widget>[
-              IconTheme(
-                data: IconThemeData(color: Color.fromRGBO(29, 133, 3, 0)),
-                child: Icon(Icons.lock),
-              ),
-              Expanded(
-                child: TextFormField(
-                  controller: kelCont,
-                  decoration: InputDecoration(
-                    labelText: 'Kelurahan',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                    contentPadding:
-                        EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                  ),
-                  validator: validateField,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.0),
-          Row(
-            children: <Widget>[
-              IconTheme(
-                data: IconThemeData(color: Color.fromRGBO(29, 133, 3, 0)),
-                child: Icon(Icons.lock),
-              ),
-              Expanded(
-                child: TextFormField(
-                  controller: kodPosCont,
-                  decoration: InputDecoration(
-                    labelText: 'Kode Pos',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                    contentPadding:
-                        EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                  ),
-                  validator: validateField,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.0),
+          
           Column(
             children: <Widget>[
               ListTile(
@@ -462,7 +498,7 @@ class addUserState extends State<addUserForm> {
                         addUser('admin');
                       } else if (status == dealerStat.salesRep) {
                         addUser('salesRep');
-                      } 
+                      }
                     } else {
                       setState(() {
                         areFieldsEmpty = true;

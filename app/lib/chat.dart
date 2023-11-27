@@ -34,10 +34,13 @@ class _ChatState extends State<chat> {
   bool isLoading = false;
   String noWA = "";
   late Timer timer;
+  bool hasSelectedRep = false;
   @override
   void initState() {
     super.initState();
+    // checkSelectedRep();
     getUserData();
+    // fetchCabRep();
     fetchFAQs();
     fetchChatHistory();
     startChatHistoryPolling();
@@ -49,14 +52,47 @@ class _ChatState extends State<chat> {
     super.dispose();
   }
 
+  void _navigateToChatPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => chat(
+          uname: widget.uname,
+          status: widget.status,
+          product: "false",
+        ),
+      ),
+    );
+  }
+
+  Future<void> checkSelectedRep() async {
+    final response = await http.post(Uri.parse('http://localhost/userCS.php'),
+        body: {'check': "true", 'uId': userData['UserId']});
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print(data);
+      if (data['success']) {
+        setState(() {
+          hasSelectedRep = true;
+        });
+      } else {
+        setState(() {
+          hasSelectedRep = false;
+        });
+      }
+    } else {
+      throw Exception('Failed to fetch list data');
+    }
+  }
+
   Map<String, dynamic> userData = {};
   Future<void> getUserData() async {
+    print("uname" + widget.uname);
     final response = await http.post(
         Uri.parse('http://localhost/getUserData.php'),
         body: {'username': widget.uname});
     if (response.statusCode == 200) {
       final jsonData = jsonDecode(response.body);
-      print(jsonData);
       if (jsonData['success']) {
         if (jsonData.containsKey('data') &&
             jsonData['data'] is List &&
@@ -73,6 +109,41 @@ class _ChatState extends State<chat> {
       }
     } else {
       throw Exception('Failed to fetch user data');
+    }
+  }
+
+  List<Map<String, dynamic>> repList = [];
+  Future<void> fetchCabRep() async {
+    final response = await http.post(Uri.parse('http://localhost/userCS.php'),
+        body: {'fetch': "true"});
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print(data);
+      if (data['success']) {
+        setState(() {
+          repList = List<Map<String, dynamic>>.from(data['data']);
+        });
+      }
+    } else {
+      throw Exception('Failed to fetch wishlist data');
+    }
+  }
+
+  Future<void> selectCabRep(String repId) async {
+    final response = await http.post(Uri.parse('http://localhost/userCS.php'),
+        body: {'selected': "true", 'uId': userData['UserId'], 'repId': repId});
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        setState(() {
+          hasSelectedRep = true;
+        });
+        _navigateToChatPage();
+      } else {
+        throw Exception('Failed to select cabrep');
+      }
+    } else {
+      throw Exception('Failed to fetch cabrep data');
     }
   }
 
@@ -108,7 +179,7 @@ class _ChatState extends State<chat> {
     setState(() {
       isLoading = true;
     });
-    // print(userData["UserId"]);
+    // print("chat Hist " + userData["UserId"]);
     if (userData['UserId'] == null) {
       print("User data kosong :(");
     } else {
@@ -162,36 +233,53 @@ class _ChatState extends State<chat> {
     timer.cancel();
   }
 
-  void sendFAQAnalytics(int faqId) {}
-  void showNotification(String message, String sender) {
-    final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  Future<void> sendFAQAnalytics(FAQ faq) async {
+    var url = Uri.parse('http://localhost/faq.php');
+    var response = await http.post(url, body: {
+      'faqId': faq.id.toString(),
+      'userId': userData['UserId'],
+      'timeView': currentTime.toString(),
+    });
 
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-      'your_channel_id',
-      'your_channel_name',
-      'your_channel_description',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
-    const IOSNotificationDetails iOSPlatformChannelSpecifics =
-        IOSNotificationDetails();
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(
-        android: androidPlatformChannelSpecifics,
-        iOS: iOSPlatformChannelSpecifics);
-
-    // Customize your notification title and body here based on the sender and message
-    String notificationTitle = sender == widget.uname ? 'You' : sender;
-    String notificationBody = message;
-
-    flutterLocalNotificationsPlugin.show(
-      0, // Notification ID
-      notificationTitle, // Notification title
-      notificationBody, // Notification body
-      platformChannelSpecifics,
-      payload: 'additional_data_here', // You can pass additional data here
-    );
+    if (response.statusCode == 200) {
+      final jsonData = jsonDecode(response.body);
+      if (jsonData['success']) {
+        print(jsonData['success']);
+      } else {
+        print(jsonData['message']);
+      }
+    } else {
+      throw Exception('Failed to send FAQ analytic');
+    }
   }
+
+  // void showNotification(String message, String sender) {
+  //   final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+  //   const AndroidNotificationDetails androidPlatformChannelSpecifics =
+  //       AndroidNotificationDetails(
+  //     '1',
+  //     'test',
+  //     'test',
+  //     importance: Importance.max,
+  //     priority: Priority.high,
+  //   );
+  //   const IOSNotificationDetails iOSPlatformChannelSpecifics =
+  //       IOSNotificationDetails();
+  //   const NotificationDetails platformChannelSpecifics = NotificationDetails(
+  //       android: androidPlatformChannelSpecifics,
+  //       iOS: iOSPlatformChannelSpecifics);
+  //   String notificationTitle = sender == widget.uname ? 'You' : sender;
+  //   String notificationBody = message;
+
+  //   flutterLocalNotificationsPlugin.show(
+  //     0,
+  //     notificationTitle,
+  //     notificationBody,
+  //     platformChannelSpecifics,
+  //     payload: 'additional_data_here',
+  //   );
+  // }
 
   void sendMessage(String message, String sender) async {
     var url = Uri.parse('http://localhost/chat.php');
@@ -206,7 +294,7 @@ class _ChatState extends State<chat> {
       final data = jsonDecode(response.body);
       if (data['success']) {
         print("Message sent");
-        showNotification(message, sender);
+        // showNotification(message, sender);
       }
     } else {
       print('Request failed with status: ${response.statusCode}');
@@ -277,6 +365,7 @@ class _ChatState extends State<chat> {
     //   ),
     // );
   }
+
   @override
   Widget build(BuildContext context) {
     if (widget.product != "false") {
@@ -286,10 +375,10 @@ class _ChatState extends State<chat> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Chat",
+          "Sales",
           style: TextStyle(
-            color: Color.fromRGBO(61, 133, 3, 1),
-            fontWeight: FontWeight.bold,
+            color: Colors.black,
+            fontWeight: FontWeight.w600,
           ),
         ),
         backgroundColor: Colors.white,
@@ -298,7 +387,6 @@ class _ChatState extends State<chat> {
           color: Color.fromRGBO(61, 133, 3, 1),
         ),
       ),
-      // backgroundColor: Color.fromRGBO(0, 0, 0, 0.1),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -323,8 +411,8 @@ class _ChatState extends State<chat> {
                           padding: EdgeInsets.all(8.0),
                           decoration: BoxDecoration(
                             color: isCurrentUser
-                                ? Color.fromRGBO(0, 0, 0, 0.2)
-                                : Color.fromRGBO(29, 133, 3, 0.3),
+                                ? Color.fromRGBO(0, 166, 82, 1)
+                                : Color.fromRGBO(240, 240, 240, 1),
                             borderRadius: BorderRadius.circular(8.0),
                           ),
                           child: Text(
@@ -332,7 +420,7 @@ class _ChatState extends State<chat> {
                             style: TextStyle(
                               fontSize: 15,
                               color:
-                                  isCurrentUser ? Colors.black : Colors.black,
+                                  isCurrentUser ? Colors.white : Colors.black,
                             ),
                           ),
                         ),
@@ -376,7 +464,10 @@ class _ChatState extends State<chat> {
                       return Builder(
                         builder: (BuildContext context) {
                           return GestureDetector(
-                            onTap: () => navigateToFAQDetail(faq),
+                            onTap: () {
+                              sendFAQAnalytics(faq);
+                              // navigateToFAQDetail(faq);
+                            },
                             child: Card(
                               margin: EdgeInsets.symmetric(horizontal: 5.0),
                               shape: RoundedRectangleBorder(
@@ -426,91 +517,108 @@ class _ChatState extends State<chat> {
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _chatController,
-                    decoration: InputDecoration(
-                      hintText: 'Type a message...',
+                  child: Container(
+                    child: TextField(
+                      controller: _chatController,
+                      decoration: InputDecoration(
+                        hintText: 'Type a message...',
+                        filled: true,
+                        fillColor: Color.fromRGBO(240, 240, 240, 1),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20.0),
+                          borderSide: BorderSide(
+                            color: Color.fromRGBO(240, 240, 240, 1),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: Icon(
-                    Icons.send,
+                Container(
+                  margin: EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
                     color: Color.fromRGBO(29, 133, 3, 1),
                   ),
-                  onPressed: () {
-                    final message = _chatController.text.trim();
-                    if (message.isNotEmpty) {
-                      sendMessage(message, widget.uname);
-                      _chatController.clear();
-                    }
-                  },
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.send,
+                      color: Colors.white,
+                    ),
+                    onPressed: () {
+                      final message = _chatController.text.trim();
+                      if (message.isNotEmpty) {
+                        sendMessage(message, widget.uname);
+                        _chatController.clear();
+                      }
+                    },
+                  ),
                 ),
               ],
             ),
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        onTap: (int index) {
-          switch (index) {
-            case 0:
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => wishlist(
-                          username: widget.uname,
-                          status: widget.status,
-                        )),
-              );
-              break;
-            case 1:
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => userHomeScreen(
-                          uname: widget.uname,
-                          status: widget.status,
-                        )),
-              );
-              break;
-            case 2:
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => chat(
-                        uname: widget.uname,
-                        status: widget.status,
-                        product: "false")),
-              );
-              break;
-          }
-        },
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: FaIcon(
-              FontAwesomeIcons.heart,
-              color: Color.fromRGBO(29, 133, 3, 1),
-            ),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: FaIcon(
-              FontAwesomeIcons.home,
-              color: Color.fromRGBO(29, 133, 3, 1),
-            ),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: FaIcon(
-              FontAwesomeIcons.message,
-              color: Color.fromRGBO(29, 133, 3, 1),
-            ),
-            label: '',
-          ),
-        ],
-      ),
+      // bottomNavigationBar: BottomNavigationBar(
+      //   type: BottomNavigationBarType.fixed,
+      //   onTap: (int index) {
+      //     switch (index) {
+      //       case 0:
+      //         Navigator.push(
+      //           context,
+      //           MaterialPageRoute(
+      //               builder: (context) => wishlist(
+      //                     username: widget.uname,
+      //                     status: widget.status,
+      //                   )),
+      //         );
+      //         break;
+      //       case 1:
+      //         Navigator.push(
+      //           context,
+      //           MaterialPageRoute(
+      //               builder: (context) => userHomeScreen(
+      //                     uname: widget.uname,
+      //                     status: widget.status,
+      //                   )),
+      //         );
+      //         break;
+      //       case 2:
+      //         Navigator.push(
+      //           context,
+      //           MaterialPageRoute(
+      //               builder: (context) => chat(
+      //                   uname: widget.uname,
+      //                   status: widget.status,
+      //                   product: "false")),
+      //         );
+      //         break;
+      //     }
+      //   },
+      //   items: const <BottomNavigationBarItem>[
+      //     BottomNavigationBarItem(
+      //       icon: FaIcon(
+      //         FontAwesomeIcons.heart,
+      //         color: Color.fromRGBO(29, 133, 3, 1),
+      //       ),
+      //       label: '',
+      //     ),
+      //     BottomNavigationBarItem(
+      //       icon: FaIcon(
+      //         FontAwesomeIcons.home,
+      //         color: Color.fromRGBO(29, 133, 3, 1),
+      //       ),
+      //       label: '',
+      //     ),
+      //     BottomNavigationBarItem(
+      //       icon: FaIcon(
+      //         FontAwesomeIcons.message,
+      //         color: Color.fromRGBO(29, 133, 3, 1),
+      //       ),
+      //       label: '',
+      //     ),
+      //   ],
+      // ),
     );
   }
 }

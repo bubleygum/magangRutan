@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
 class admin_chat extends StatefulWidget {
   final String idChatRep;
   final String uname;
@@ -23,13 +24,18 @@ class admin_chatState extends State<admin_chat> {
   DateTime currentTime = DateTime.now();
   bool isLoading = false;
   late Timer timer;
-
+  String userId = "";
   @override
   void initState() {
     super.initState();
+    initializeData();
+  }
+
+  Future<void> initializeData() async {
+    await getUserData();
     fetchChatHistory();
     startChatHistoryPolling();
-    // test();
+    test();
   }
 
   @override
@@ -43,13 +49,39 @@ class admin_chatState extends State<admin_chat> {
     print(widget.custId);
   }
 
+  Map<String, dynamic> userData = {};
+  Future<void> getUserData() async {
+    // print("here" + uname);
+    final response = await http.post(
+        Uri.parse('http://localhost/getUserData.php'),
+        body: {'username': widget.uname});
+    if (response.statusCode == 200) {
+      final jsonData = jsonDecode(response.body);
+      // print(response.body);
+
+      if (jsonData['success']) {
+        var data = jsonData['data'];
+        setState(() {
+          userData = jsonData;
+          userId = jsonData['data'][0]['UserId'].toString();
+          // print(userId);
+        });
+      } else {
+        print(jsonData['message']);
+      }
+    } else {
+      throw Exception('Failed to fetch user data');
+    }
+  }
+
   void fetchChatHistory() async {
     setState(() {
       isLoading = true;
     });
 
     var url = Uri.parse('http://localhost/adminChat.php');
-    final response = await http.post(url, body: {'custId': widget.custId, 'idCabRep': widget.idChatRep});
+    final response = await http.post(url,
+        body: {'custId': widget.custId, 'idCabRep': widget.idChatRep});
     // print(jsonDecode(response.body));
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -96,12 +128,14 @@ class admin_chatState extends State<admin_chat> {
 
   void sendMessage(String message, String sender) async {
     var url = Uri.parse('http://localhost/adminChat.php');
+    print(userId);
     final response = await http.post(url, body: {
       'custId': widget.custId,
       'idCabRep': widget.idChatRep,
       'message': message,
       'time': currentTime.toString(),
       'sender': sender,
+      'salesId': userId
     });
 
     if (response.statusCode == 200) {
@@ -155,8 +189,8 @@ class admin_chatState extends State<admin_chat> {
                           padding: EdgeInsets.all(8.0),
                           decoration: BoxDecoration(
                             color: isCurrentUser
-                                ? Color.fromRGBO(29, 133, 3, 0.3)
-                                : Color.fromRGBO(0, 0, 0, 0.2),
+                                ? Color.fromRGBO(0, 166, 82, 1)
+                                : Color.fromRGBO(240, 240, 240, 1),
                             borderRadius: BorderRadius.circular(8.0),
                           ),
                           child: Text(
@@ -164,7 +198,7 @@ class admin_chatState extends State<admin_chat> {
                             style: TextStyle(
                               fontSize: 15,
                               color:
-                                  isCurrentUser ? Colors.black : Colors.black,
+                                  isCurrentUser ? Colors.white : Colors.black,
                             ),
                           ),
                         ),
@@ -181,28 +215,42 @@ class admin_chatState extends State<admin_chat> {
                     controller: _chatController,
                     decoration: InputDecoration(
                       hintText: 'Type a message...',
+                      filled: true,
+                      fillColor: Color.fromRGBO(240, 240, 240, 1),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20.0),
+                        borderSide: BorderSide(
+                          color: Color.fromRGBO(240, 240, 240, 1),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: Icon(
-                    Icons.send,
+                Container(
+                  margin: EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
                     color: Color.fromRGBO(29, 133, 3, 1),
                   ),
-                  onPressed: () {
-                    final message = _chatController.text.trim();
-                    if (message.isNotEmpty) {
-                      sendMessage(message, "admin");
-                      _chatController.clear();
-                    }
-                  },
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.send,
+                      color: Colors.white,
+                    ),
+                    onPressed: () {
+                      final message = _chatController.text.trim();
+                      if (message.isNotEmpty && userId.isNotEmpty) {
+                        sendMessage(message, "admin");
+                        _chatController.clear();
+                      }
+                    },
+                  ),
                 ),
               ],
             ),
           ),
         ],
       ),
-      
     );
   }
 }

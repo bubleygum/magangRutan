@@ -83,7 +83,7 @@ class adminUserListState extends State<adminUserList> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "User List",
+          "List User",
           style: TextStyle(
             color: Color.fromRGBO(61, 133, 3, 1),
             fontWeight: FontWeight.bold,

@@ -11,7 +11,8 @@ class adminChatList extends StatefulWidget {
 
   const adminChatList({required this.username, Key? key}) : super(key: key);
   @override
-  State<adminChatList> createState() => adminChatListScreenState(uname: username);
+  State<adminChatList> createState() =>
+      adminChatListScreenState(uname: username);
 }
 
 class adminChatListScreenState extends State<adminChatList> {
@@ -26,7 +27,6 @@ class adminChatListScreenState extends State<adminChatList> {
     fetchChatList();
   }
 
-
   Future<void> fetchChatList() async {
     final response = await http.post(
       Uri.parse('http://localhost/adminChatList.php'),
@@ -40,7 +40,7 @@ class adminChatListScreenState extends State<adminChatList> {
         });
       }
     } else {
-      throw Exception('Failed to fetch wishlist data');
+      throw Exception('Failed to fetch chat list data');
     }
   }
 
@@ -49,7 +49,7 @@ class adminChatListScreenState extends State<adminChatList> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Promotion List",
+          "Chat List",
           style: TextStyle(
             color: Color.fromRGBO(61, 133, 3, 1),
             fontWeight: FontWeight.bold,

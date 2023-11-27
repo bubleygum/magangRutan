@@ -1,9 +1,13 @@
 import 'package:app/admin_home.dart';
 import 'package:app/cs_chatList.dart';
+import 'package:app/admin_chatList.dart';
+import 'package:app/listCS.dart';
 import 'package:app/login.dart';
 import 'package:app/notification_service.dart';
 import 'package:app/notif.dart';
 import 'package:app/productList.dart';
+import 'package:app/prodDetail.dart';
+import 'package:app/profile.dart';
 import 'package:app/tentangKami.dart';
 import 'package:app/wishlist.dart';
 import 'package:app/chat.dart';
@@ -15,7 +19,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:dots_indicator/dots_indicator.dart';
-import 'package:app/wishlist.dart';
 
 class userHomeScreen extends StatefulWidget {
   final String uname;
@@ -31,8 +34,9 @@ class userHomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<userHomeScreen> {
   final String uname;
   final String status;
-  List<String> carouselImages = [];
+  List<Map<String, dynamic>> carouselImages = [];
   List<Map<String, dynamic>> buttonData = [];
+  List<Map<String, dynamic>> prodTagData = [];
   late PageController _pageController = PageController();
   CarouselController _carouselController = CarouselController();
   int _currentCarouselIndex = 0;
@@ -40,15 +44,16 @@ class _HomeScreenState extends State<userHomeScreen> {
   DateTime currentTime = DateTime.now();
   _HomeScreenState({required this.uname, required this.status, Key? key});
   List<String> wishlistData = [];
-
+  String? userId;
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: 0);
-    // fetchCarouselImages();
-    fetchWishlistData(uname);
     getUserData();
+    fetchCarouselImages();
+    fetchWishlistData(uname);
     fetchBtn();
+    fetchAll();
   }
 
   @override
@@ -57,20 +62,20 @@ class _HomeScreenState extends State<userHomeScreen> {
     super.dispose();
   }
 
-  Future<void> fetchCarouselImages() async {
-    final response =
-        await http.get(Uri.parse('http://localhost/fetchCarousel.php'));
+Future<void> fetchCarouselImages() async {
+  final response =
+      await http.get(Uri.parse('http://localhost/fetchCarousel.php'));
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print(jsonDecode(response.body));
-      setState(() {
-        carouselImages = List<String>.from(data['data']);
-      });
-    } else {
-      throw Exception('Failed to fetch carousel images');
-    }
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    // print(jsonDecode(response.body));
+    setState(() {
+      carouselImages = List<Map<String, dynamic>>.from(data['data']);
+    });
+  } else {
+    throw Exception('Failed to fetch carousel images');
   }
+}
 
   Future<void> fetchBtn() async {
     try {
@@ -98,15 +103,19 @@ class _HomeScreenState extends State<userHomeScreen> {
 
   Map<String, dynamic> userData = {};
   Future<void> getUserData() async {
+    // print("here" + uname);
     final response = await http.post(
         Uri.parse('http://localhost/getUserData.php'),
         body: {'username': uname});
     if (response.statusCode == 200) {
       final jsonData = jsonDecode(response.body);
+      // print(response.body);
+
       if (jsonData['success']) {
         var data = jsonData['data'];
         setState(() {
           userData = jsonData;
+          userId = jsonData['data'][0]['UserId'].toString();
         });
       } else {
         print(jsonData['message']);
@@ -150,7 +159,6 @@ class _HomeScreenState extends State<userHomeScreen> {
 
   Widget _buildRoundedButton(String label, int index) {
     bool isSelected = index == _selectedButtonIndex;
-
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(25.0),
@@ -158,10 +166,18 @@ class _HomeScreenState extends State<userHomeScreen> {
       ),
       child: ElevatedButton(
         onPressed: () {
-          // Handle button click
           setState(() {
             _selectedButtonIndex = index;
           });
+          if (label == "All") {
+            fetchAll();
+          } else if (label == "Newest") {
+            fetchNewest();
+          } else if (label == "Best Sellers") {
+            fetchBest();
+          } else if (label == "Promo") {
+            fetchPromo();
+          }
         },
         style: ElevatedButton.styleFrom(
           primary: Colors.transparent,
@@ -203,6 +219,7 @@ class _HomeScreenState extends State<userHomeScreen> {
   }
 
   Future<void> addRemWishlist(String prodName, String? picUrl) async {
+    await getUserData();
     try {
       var url = Uri.parse('http://localhost/prodDetail.php');
       var queryParameters = {
@@ -214,6 +231,7 @@ class _HomeScreenState extends State<userHomeScreen> {
       var response = await http.post(url, body: queryParameters);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print(response.body);
         if (data['success']) {
           showDialog(
             context: context,
@@ -257,7 +275,6 @@ class _HomeScreenState extends State<userHomeScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success']) {
-          // Remove the product from the local wishlist data
           setState(() {
             wishlistData.remove(prodName);
           });
@@ -269,6 +286,132 @@ class _HomeScreenState extends State<userHomeScreen> {
       }
     } catch (error) {
       print('Error sending request: $error');
+    }
+  }
+
+  void sendPromoAnalytic(String id) async {
+    await getUserData();
+    print(id + "$userId");
+    if (userId != null) {
+      var url = Uri.parse('http://localhost/promoAnalytic.php');
+      var queryParameters = {
+        'IdPromo': id,
+        'userId': userId.toString(),
+        'timeView': DateTime.now().toString(),
+      };
+
+      try {
+        var response = await http.post(url, body: queryParameters);
+
+        if (response.statusCode == 200) {
+          var jsonData = json.decode(response.body);
+          print(response.body);
+          if (jsonData['success']) {
+            print(jsonData['message']);
+          } else {
+            print(jsonData['message']);
+          }
+        } else {
+          print('Request failed with status: ${response.statusCode}');
+        }
+      } catch (error) {
+        print('Error sending request: $error');
+      }
+    } else {
+      print('User data not available. Cannot send promo analytic.');
+    }
+  }
+
+  Future<void> fetchAll() async {
+    final response = await http.post(
+      Uri.parse('http://localhost/homeTag.php'),
+      body: {},
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        if (data['data'] is List<dynamic>) {
+          setState(() {
+            prodTagData =
+                List<Map<String, dynamic>>.from(data['data']).map((item) {
+              item['UrlPhoto'] = item['UrlPhoto'].replaceAll(r'\/', '/');
+              return item;
+            }).toList();
+          });
+          print(prodTagData);
+        }
+      }
+    } else {
+      throw Exception('Failed to fetch wishlist data');
+    }
+  }
+
+  Future<void> fetchNewest() async {
+    final response = await http.post(
+      Uri.parse('http://localhost/homeTag.php'),
+      body: {'newest': 'true'},
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        if (data['data'] is List<dynamic>) {
+          setState(() {
+            prodTagData =
+                List<Map<String, dynamic>>.from(data['data']).map((item) {
+              item['UrlPhoto'] = item['UrlPhoto'].replaceAll(r'\/', '/');
+              return item;
+            }).toList();
+          });
+        }
+      }
+    } else {
+      throw Exception('Failed to fetch wishlist data');
+    }
+  }
+
+  Future<void> fetchBest() async {
+    final response = await http.post(
+      Uri.parse('http://localhost/homeTag.php'),
+      body: {'best': 'true'},
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        if (data['data'] is List<dynamic>) {
+          setState(() {
+            prodTagData =
+                List<Map<String, dynamic>>.from(data['data']).map((item) {
+              item['UrlPhoto'] = item['UrlPhoto'].replaceAll(r'\/', '/');
+              return item;
+            }).toList();
+          });
+        }
+      }
+    } else {
+      throw Exception('Failed to fetch wishlist data');
+    }
+  }
+
+  Future<void> fetchPromo() async {
+    final response = await http.post(
+      Uri.parse('http://localhost/homeTag.php'),
+      body: {'promo': 'true'},
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        if (data['data'] is List<dynamic>) {
+          setState(() {
+            prodTagData =
+                List<Map<String, dynamic>>.from(data['data']).map((item) {
+              item['UrlPhoto'] = item['UrlPhoto'].replaceAll(r'\/', '/');
+              return item;
+            }).toList();
+          });
+        }
+      }
+    } else {
+      throw Exception('Failed to fetch wishlist data');
     }
   }
 
@@ -298,16 +441,28 @@ class _HomeScreenState extends State<userHomeScreen> {
               color: Colors.black,
             ),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => chat(
-                    uname: uname,
-                    status: status,
-                    product: "false",
+              if (status == "1") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => adminChatList(
+                      username: uname,
+                    ),
                   ),
-                ),
-              );
+                );
+              } else if (status == "3") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ListCs(
+                      uname: uname,
+                      uId: userId.toString(),
+                      status: status,
+                      product: "false",
+                    ),
+                  ),
+                );
+              }
             },
           ),
           IconButton(
@@ -340,38 +495,46 @@ class _HomeScreenState extends State<userHomeScreen> {
               SizedBox(
                 height: 5,
               ),
-              // if (carouselImages.isNotEmpty)
-              //   CarouselSlider(
-              //     carouselController: _carouselController,
-              //     items: carouselImages.map((image) {
-              //       return Builder(
-              //         builder: (BuildContext context) {
-              //           return Container(
-              //             width: double.infinity,
-              //             height: carouselHeight,
-              //             decoration: BoxDecoration(
-              //               image: DecorationImage(
-              //                 image: NetworkImage(image),
-              //                 fit: BoxFit.cover,
-              //               ),
-              //             ),
-              //           );
-              //         },
-              //       );
-              //     }).toList(),
-              //     options: CarouselOptions(
-              //       height: carouselHeight,
-              //       autoPlay: true,
-              //       enlargeCenterPage: true,
-              //       viewportFraction: 0.8,
-              //       aspectRatio: 16 / 9,
-              //       onPageChanged: (index, reason) {
-              //         setState(() {
-              //           _currentCarouselIndex = index;
-              //         });
-              //       },
-              //     ),
-              //   ),
+              if (carouselImages.isNotEmpty)
+                CarouselSlider(
+                  carouselController: _carouselController,
+                  items: carouselImages.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final image = entry.value['ImgPromo'];
+                    final idPromo = entry.value['IdPromo'];
+                    return GestureDetector(
+                      onTap: () {
+                        sendPromoAnalytic(idPromo.toString());
+                      },
+                      child: Builder(
+                        builder: (BuildContext context) {
+                          return Container(
+                            width: double.infinity,
+                            height: carouselHeight,
+                            decoration: BoxDecoration(
+                              image: DecorationImage(
+                                image: NetworkImage(image),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  }).toList(),
+                  options: CarouselOptions(
+                    height: carouselHeight,
+                    autoPlay: true,
+                    enlargeCenterPage: true,
+                    viewportFraction: 0.8,
+                    aspectRatio: 16 / 9,
+                    onPageChanged: (index, reason) {
+                      setState(() {
+                        _currentCarouselIndex = index;
+                      });
+                    },
+                  ),
+                ),
               SizedBox(
                 height: 20,
               ),
@@ -512,10 +675,11 @@ class _HomeScreenState extends State<userHomeScreen> {
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
                 crossAxisCount: 2,
-                children: List.generate(buttonData.length, (index) {
-                  final productName = buttonData[index]['NamaKategori']!;
+                children: List.generate(prodTagData.length, (index) {
+                  final productName = prodTagData[index]['ProdName']!;
                   final isProductInWishlist =
                       wishlistData.contains(productName);
+
                   return GestureDetector(
                     child: Stack(
                       children: [
@@ -536,9 +700,8 @@ class _HomeScreenState extends State<userHomeScreen> {
                                   alignment: Alignment.topRight,
                                   child: GestureDetector(
                                     onTap: () {
-                                      // Handle heart icon click here
                                       addRemWishlist(productName,
-                                          buttonData[index]['imgKategori']);
+                                          prodTagData[index]['UrlPhoto']);
                                     },
                                     child: Icon(
                                       isProductInWishlist
@@ -553,7 +716,11 @@ class _HomeScreenState extends State<userHomeScreen> {
                                 child: Opacity(
                                   opacity: 0.5,
                                   child: Image.network(
-                                    buttonData[index]['imgKategori']!,
+                                    prodTagData[index]['UrlPhoto']!,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      print('Error loading image: $error');
+                                      return Center(child: Text('Image Error'));
+                                    },
                                   ),
                                 ),
                               ),
@@ -570,14 +737,14 @@ class _HomeScreenState extends State<userHomeScreen> {
                       ],
                     ),
                     onTap: () {
-                      if (buttonData[index]['IdKategori'] != null) {
+                      if (prodTagData[index]['ProdCode'] != null) {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => prodList(
-                              data: buttonData[index]['IdKategori']!.toString(),
-                              uname: uname,
-                              status: status,
+                            builder: (context) => prodDetail(
+                              data: prodTagData[index]['ProdCode'],
+                              uname: widget.uname,
+                              status: widget.status,
                             ),
                           ),
                         );
@@ -627,7 +794,7 @@ class _HomeScreenState extends State<userHomeScreen> {
                 context,
                 MaterialPageRoute(
                     builder: (context) =>
-                        chat(uname: uname, status: status, product: "false")),
+                        Profile(username: uname, status: status,)),
               );
               break;
           }
@@ -638,30 +805,32 @@ class _HomeScreenState extends State<userHomeScreen> {
               FontAwesomeIcons.home,
               color: Color.fromRGBO(29, 133, 3, 1),
             ),
-            label: '',
+            label: 'Beranda',
           ),
           BottomNavigationBarItem(
             icon: FaIcon(
               FontAwesomeIcons.heart,
               color: Color.fromRGBO(179, 192, 212, 1),
             ),
-            label: '',
+            label: 'Wishlist',
           ),
           BottomNavigationBarItem(
             icon: FaIcon(
               FontAwesomeIcons.motorcycle,
               color: Color.fromRGBO(179, 192, 212, 1),
             ),
-            label: '',
+            label: 'All Product',
           ),
           BottomNavigationBarItem(
             icon: FaIcon(
               FontAwesomeIcons.solidUser,
               color: Color.fromRGBO(179, 192, 212, 1),
             ),
-            label: '',
+            label: 'Account',
           ),
         ],
+        selectedItemColor: Color.fromRGBO(29, 133, 3, 1),
+        unselectedItemColor: Color.fromRGBO(130, 143, 161, 1),
       ),
       drawer: Drawer(
         child: ListView(

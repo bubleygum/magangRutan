@@ -22,12 +22,14 @@ class prodDetail extends StatefulWidget {
 class prodDetailState extends State<prodDetail> {
   Map<String, dynamic> prodData = {};
   DateTime currentTime = DateTime.now();
-
+  bool isItemInWishlist = false;
   @override
   void initState() {
     super.initState();
-    fetchData();
     getUserData();
+    fetchData();
+    // print("UserId" + userData['UserId']);
+    // print("time" + DateTime.now().toString());
   }
 
   Map<String, dynamic> userData = {};
@@ -47,6 +49,7 @@ class prodDetailState extends State<prodDetail> {
           setState(() {
             userData = Map<String, dynamic>.from(data);
           });
+          print(data);
         } else {
           print('Invalid data format in the API response');
         }
@@ -59,8 +62,16 @@ class prodDetailState extends State<prodDetail> {
   }
 
   void fetchData() async {
+    await getUserData();
+    // print("UserId" + userData['UserId']);
+    // print("time" + DateTime.now().toString());
     var url = Uri.parse('http://localhost/prodDetail.php');
-    var queryParameters = {'prodCode': widget.data};
+
+    var queryParameters = {
+      'prodCode': widget.data,
+      'userId': userData['UserId'],
+      'timeView': DateTime.now().toString(),
+    };
 
     try {
       var response = await http.post(url, body: queryParameters);
@@ -73,6 +84,7 @@ class prodDetailState extends State<prodDetail> {
 
           setState(() {
             prodData = data;
+            isItemInWishlist = data['isInWishlist'] == 1;
           });
         } else {
           print(jsonData['message']);
@@ -236,21 +248,57 @@ class prodDetailState extends State<prodDetail> {
               SizedBox(
                 height: 20,
               ),
-              Text(
-                prodName,
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
+              Row(
+                children: [
+                  Text(
+                    prodName,
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      isItemInWishlist ? Icons.favorite : Icons.favorite_border,
+                      color: isItemInWishlist ? Colors.red : null,
+                    ),
+                    onPressed: () {
+                      if (!isItemInWishlist) {
+                        addToWishlist(
+                          prodName,
+                          photos.isNotEmpty ? photos[0]['UrlPhoto'] : null,
+                        );
+                      } else {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              content: Text('Item sudah ada di wishlist!'),
+                              actions: <Widget>[
+                                TextButton(
+                                  child: Text('OK'),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      }
+                    },
+                  ),
+                ],
               ),
-              Text(
-                "Harga",
-                style: TextStyle(
-                  color: Color.fromRGBO(61, 133, 3, 1),
-                  fontSize: 20,
-                ),
-              ),
+              // Text(
+              //   "Rp." ,
+              //   style: TextStyle(
+              //     color: Color.fromRGBO(61, 133, 3, 1),
+              //     fontSize: 20,
+              //     fontWeight: FontWeight.w700
+              //   ),
+              // ),
               SizedBox(
                 height: 20,
               ),
@@ -262,8 +310,7 @@ class prodDetailState extends State<prodDetail> {
                       text: 'Deskripsi Produk',
                       style: TextStyle(
                         color: Colors.black,
-                        fontWeight:
-                            FontWeight.bold, 
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     TextSpan(
@@ -280,32 +327,12 @@ class prodDetailState extends State<prodDetail> {
               ),
               Column(
                 children: [
-                  Container(
-                    // width: double.infinity,
-                    // width: btnWidth,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        await addToWishlist(
-                          prodName,
-                          photos.isNotEmpty ? photos[0]['UrlPhoto'] : null,
-                        );
-                      },
-                      child: Text(
-                        "Masukkan ke Wishlist",
-                        style: TextStyle(fontSize: 15),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        primary: Color.fromRGBO(29, 133, 3, 1),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(0),
-                        ),
-                      ),
-                    ),
-                  ),
                   SizedBox(
                     height: 20,
                   ),
                   Container(
+                    height: 48.0,
+
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
@@ -319,13 +346,13 @@ class prodDetailState extends State<prodDetail> {
                         );
                       },
                       child: Text(
-                        "Hubungi Sales Kami",
+                        "Chat Sales",
                         style: TextStyle(fontSize: 15),
                       ),
                       style: ElevatedButton.styleFrom(
-                        primary: Color.fromRGBO(29, 133, 3, 1),
+                        primary: Color.fromRGBO(0, 166, 82, 1),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(0),
+                          borderRadius: BorderRadius.circular(25.0),
                         ),
                       ),
                     ),
@@ -337,66 +364,66 @@ class prodDetailState extends State<prodDetail> {
         ),
       ),
       // ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        onTap: (int index) {
-          switch (index) {
-            case 0:
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => wishlist(
-                          username: widget.uname,
-                          status: widget.status,
-                        )),
-              );
-              break;
-            case 1:
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => userHomeScreen(
-                          uname: widget.uname,
-                          status: widget.status,
-                        )),
-              );
-              break;
-            case 2:
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => chat(
-                        uname: widget.uname,
-                        status: widget.status,
-                        product: "false")),
-              );
-              break;
-          }
-        },
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: FaIcon(
-              FontAwesomeIcons.heart,
-              color: Color.fromRGBO(29, 133, 3, 1),
-            ),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: FaIcon(
-              FontAwesomeIcons.home,
-              color: Color.fromRGBO(29, 133, 3, 1),
-            ),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: FaIcon(
-              FontAwesomeIcons.message,
-              color: Color.fromRGBO(29, 133, 3, 1),
-            ),
-            label: '',
-          ),
-        ],
-      ),
+      // bottomNavigationBar: BottomNavigationBar(
+      //   type: BottomNavigationBarType.fixed,
+      //   onTap: (int index) {
+      //     switch (index) {
+      //       case 0:
+      //         Navigator.push(
+      //           context,
+      //           MaterialPageRoute(
+      //               builder: (context) => wishlist(
+      //                     username: widget.uname,
+      //                     status: widget.status,
+      //                   )),
+      //         );
+      //         break;
+      //       case 1:
+      //         Navigator.push(
+      //           context,
+      //           MaterialPageRoute(
+      //               builder: (context) => userHomeScreen(
+      //                     uname: widget.uname,
+      //                     status: widget.status,
+      //                   )),
+      //         );
+      //         break;
+      //       case 2:
+      //         Navigator.push(
+      //           context,
+      //           MaterialPageRoute(
+      //               builder: (context) => chat(
+      //                   uname: widget.uname,
+      //                   status: widget.status,
+      //                   product: "false")),
+      //         );
+      //         break;
+      //     }
+      //   },
+      //   items: const <BottomNavigationBarItem>[
+      //     BottomNavigationBarItem(
+      //       icon: FaIcon(
+      //         FontAwesomeIcons.heart,
+      //         color: Color.fromRGBO(29, 133, 3, 1),
+      //       ),
+      //       label: '',
+      //     ),
+      //     BottomNavigationBarItem(
+      //       icon: FaIcon(
+      //         FontAwesomeIcons.home,
+      //         color: Color.fromRGBO(29, 133, 3, 1),
+      //       ),
+      //       label: '',
+      //     ),
+      //     BottomNavigationBarItem(
+      //       icon: FaIcon(
+      //         FontAwesomeIcons.message,
+      //         color: Color.fromRGBO(29, 133, 3, 1),
+      //       ),
+      //       label: '',
+      //     ),
+      //   ],
+      // ),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
 class cs_chat extends StatefulWidget {
   final String idChatRep;
   final String uname;
@@ -23,13 +24,18 @@ class cs_chatState extends State<cs_chat> {
   DateTime currentTime = DateTime.now();
   bool isLoading = false;
   late Timer timer;
-
+  String userId = "";
   @override
   void initState() {
     super.initState();
+    initializeData();
+  }
+
+  Future<void> initializeData() async {
+    await getUserData();
     fetchChatHistory();
     startChatHistoryPolling();
-    // test();
+    test();
   }
 
   @override
@@ -49,7 +55,8 @@ class cs_chatState extends State<cs_chat> {
     });
 
     var url = Uri.parse('http://localhost/csChat.php');
-    final response = await http.post(url, body: {'custId': widget.custId, 'idCabRep': widget.idChatRep});
+    final response = await http.post(url,
+        body: {'custId': widget.custId, 'idCabRep': widget.idChatRep});
     // print(jsonDecode(response.body));
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -94,6 +101,31 @@ class cs_chatState extends State<cs_chat> {
     timer.cancel();
   }
 
+  Map<String, dynamic> userData = {};
+  Future<void> getUserData() async {
+    // print("here" + uname);
+    final response = await http.post(
+        Uri.parse('http://localhost/getUserData.php'),
+        body: {'username': widget.uname});
+    if (response.statusCode == 200) {
+      final jsonData = jsonDecode(response.body);
+      // print(response.body);
+
+      if (jsonData['success']) {
+        var data = jsonData['data'];
+        setState(() {
+          userData = jsonData;
+          userId = jsonData['data'][0]['UserId'].toString();
+          // print(userId);
+        });
+      } else {
+        print(jsonData['message']);
+      }
+    } else {
+      throw Exception('Failed to fetch user data');
+    }
+  }
+
   void sendMessage(String message, String sender) async {
     var url = Uri.parse('http://localhost/csChat.php');
     final response = await http.post(url, body: {
@@ -102,6 +134,7 @@ class cs_chatState extends State<cs_chat> {
       'message': message,
       'time': currentTime.toString(),
       'sender': sender,
+      'salesId': userId
     });
 
     if (response.statusCode == 200) {
@@ -202,7 +235,6 @@ class cs_chatState extends State<cs_chat> {
           ),
         ],
       ),
-      
     );
   }
 }

@@ -10,9 +10,7 @@ void main() async {
   await NotificationService().init();
   runApp(RutanApp());
 }
-// void main() {
-//   runApp(RutanApp());
-// }
+
 
 class RutanApp extends StatelessWidget {
   @override

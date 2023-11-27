@@ -62,7 +62,7 @@ class notifState extends State<notif> {
         body: {'username': uname});
     if (response.statusCode == 200) {
       final jsonData = jsonDecode(response.body);
-      print(jsonData);
+      // print(jsonData);
       if (jsonData['success']) {
         if (jsonData.containsKey('data') &&
             jsonData['data'] is List &&
@@ -71,12 +71,12 @@ class notifState extends State<notif> {
           setState(() {
             userData = Map<String, dynamic>.from(data);
           });
-          print(userData["UserId"]);
+          // print(userData["UserId"]);
         } else {
           print('Invalid data format in the API response');
         }
       } else {
-        print(jsonData['message']);
+        // print(jsonData['message']);
       }
     } else {
       throw Exception('Failed to fetch user data');
@@ -96,57 +96,36 @@ class notifState extends State<notif> {
   //       });
   //     }
   //   } else {
-  //     throw Exception('Failed to fetch wishlist data');
+  //     throw Exception('Failed to fetch notif data');
   //   }
   // }
 
-  // Future<void> fetchChatNotif() async {
-  //   final response = await http.post(
-  //     Uri.parse('http://localhost/chatNotif.php'),
-  //     body: {'UserId': userData["UserId"], 'userStat': userData["StatusUser"]},
-  //   );
-  //   if (response.statusCode == 200) {
-  //     final data = jsonDecode(response.body);
-  //     if (data['success']) {
-  //       setState(() {
-  //         chatNotifData = List<Map<String, dynamic>>.from(data['data']);
-  //       });
-
-  //       // Display push notification for each new notification
-  //       for (var notification in chatNotifData) {
-  //         final title = notification['title'];
-  //         final body = notification['body'];
-  //         displayPushNotification(title, body);
-  //       }
-  //     }
-  //   } else {
-  //     throw Exception('Failed to fetch wishlist data');
-  //   }
-  // }
-
-Future<void> fetchChatNotif() async {
-  final response = await http.post(
-    Uri.parse('http://localhost/chatNotif.php'),
-    body: {'UserId': userData["UserId"], 'userStat': userData["StatusUser"]},
-  );
-  if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
-    if (data['success']) {
-      setState(() {
-        chatNotifData = List<Map<String, dynamic>>.from(data['data']);
-      });
-
-      // Display push notification for each new notification
-      for (var notification in chatNotifData) {
-        final title = notification['title']; // You need to modify this part based on your PHP response
-        final body = notification['body']; // You need to modify this part based on your PHP response
-        displayPushNotification(title, body);
+  Future<void> fetchChatNotif() async {
+    final response = await http.post(
+      Uri.parse('http://localhost/chatNotif.php'),
+      body: {'UserId': userData["UserId"], 'userStat': userData["StatusUser"]},
+    );
+    print(userData['UserId']);
+    print(userData['StatusUser']);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        setState(() {
+          chatNotifData = List<Map<String, dynamic>>.from(data['data']);
+        });
+        print(data['data']);
+        if (chatNotifData.isNotEmpty) {
+          final notification =
+              chatNotifData[0]; 
+          final title = notification['title'];
+          final body = notification['body'];
+          displayPushNotification(title, body);
+        }
       }
+    } else {
+      throw Exception('Failed to fetch wishlist data');
     }
-  } else {
-    throw Exception('Failed to fetch chat notification data');
   }
-}
 
   int notificationId = 0; // Initialize a counter
 
@@ -163,7 +142,7 @@ Future<void> fetchChatNotif() async {
         NotificationDetails(android: androidPlatformChannelSpecifics);
 
     await flutterLocalNotificationsPlugin.show(
-      notificationId++, 
+      notificationId++,
       title,
       body,
       platformChannelSpecifics,
@@ -289,7 +268,8 @@ Future<void> fetchChatNotif() async {
             itemCount: data.length,
             itemBuilder: (context, index) {
               final item = data[index];
-              final custName = item['FullName'];
+              // print(data[index]);
+              final custName = item['Sender'];
               return Card(
                 margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                 elevation: 4,

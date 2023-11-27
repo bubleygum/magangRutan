@@ -196,13 +196,11 @@ class _LoginFormState extends State<LoginForm> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(25.0),
                     borderSide: BorderSide(
-                      color: Color.fromRGBO(
-                          240, 240, 240, 1), // Set border color here
+                      color: Color.fromRGBO(240, 240, 240, 1),
                     ),
                   ),
                   filled: true,
-                  fillColor: Color.fromRGBO(
-                      240, 240, 240, 1), // Set text field background color here
+                  fillColor: Color.fromRGBO(240, 240, 240, 1),
                   contentPadding:
                       EdgeInsets.symmetric(vertical: 5, horizontal: 10),
                 ),
@@ -245,8 +243,6 @@ class _LoginFormState extends State<LoginForm> {
               SizedBox(height: 8.0),
               GestureDetector(
                 onTap: () {
-                  // Add your password reset navigation logic here
-                  // For example, you can use Navigator to navigate to a reset password page.
                   // Navigator.of(context).push(MaterialPageRoute(
                   //   builder: (context) => ResetPasswordPage(),
                   // ));
