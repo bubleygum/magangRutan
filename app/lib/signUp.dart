@@ -104,18 +104,22 @@ class signUpState extends State<signUpForm> {
           'kodPos': "",
           'userJob': "",
           'createdDate': currentTime.toString(),
-          'userStat': status,
+          'userStat': "0",
         });
         if (response.statusCode == 200) {
           var data = jsonDecode(response.body);
           bool success = data['success'];
 
           if (success) {
+            print(data);
+            String userId = data.toString();
+
             Navigator.of(context).push(MaterialPageRoute(
-                builder: (context) => userHomeScreen(
-                      uname: "",
-                      status: "3",
-                    )));
+              builder: (context) => userHomeScreen(
+                uname: userId,
+                status: "0",
+              ),
+            ));
           }
         }
       }

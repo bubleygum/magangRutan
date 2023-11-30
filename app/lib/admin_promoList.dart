@@ -72,9 +72,9 @@ class adminPromoListState extends State<adminPromoList> {
           final releaseDate = item['ReleaseDate'];
           final createdDate = item['CreatedDate'];
           final createdBy = item['CreatedBy'];
-          final endDate = item['endDate'];
+          final endDate = item['EndDate'];
           final status;
-          if (item['Status'] == 1) {
+          if (item['Status'] == "1") {
             status = "aktif";
           } else {
             status = "tidak aktif";
@@ -100,6 +100,16 @@ class adminPromoListState extends State<adminPromoList> {
                   SizedBox(height: 8),
                   ElevatedButton(
                     onPressed: () {
+                      // print("Username: $uname");
+                      // print("ID Promo: $idPromo");
+                      // print("Nama Promo: $promoName");
+                      // print("Deskripsi Promo: $descPromo");
+                      // print("Keterangan Promo: $keterangan");
+                      // print("Image Promo: $imgPromo");
+                      // print("Release Date: $releaseDate");
+                      // print("Created By: $createdBy");
+                      // print("Created Date: $createdDate");
+                      // print("End Date: $endDate");
                       Navigator.push(
                         context,
                         MaterialPageRoute(

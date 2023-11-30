@@ -44,6 +44,7 @@ class _LoginFormState extends State<LoginForm> {
   DateTime currentTime = DateTime.now();
 
   void loginUser(String status) async {
+    // print("in");
     if (formKey.currentState!.validate()) {
       try {
         var url = Uri.parse('http://localhost/login.php');
@@ -98,11 +99,13 @@ class _LoginFormState extends State<LoginForm> {
                     userHomeScreen(uname: userData["FullName"], status: "1"),
               ));
             } else if (userData['Status'] == '2') {
+              print("login");
               Navigator.of(context).push(MaterialPageRoute(
                 builder: (context) =>
                     userHomeScreen(uname: userData["FullName"], status: "2"),
               ));
             } else if (userData['Status'] == '3') {
+              print("login");
               Navigator.of(context).push(MaterialPageRoute(
                 builder: (context) =>
                     userHomeScreen(uname: userData["FullName"], status: "3"),

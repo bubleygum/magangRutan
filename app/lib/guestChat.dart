@@ -10,22 +10,22 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:app/notification_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-class chat extends StatefulWidget {
-  final String uname;
+class guestChat extends StatefulWidget {
+  final String uId;
   final String status;
   final String product;
-  const chat(
-      {required this.uname,
+  const guestChat(
+      {required this.uId,
       required this.status,
       required this.product,
       Key? key})
       : super(key: key);
 
   @override
-  _ChatState createState() => _ChatState();
+  guestChatState createState() => guestChatState();
 }
 
-class _ChatState extends State<chat> {
+class guestChatState extends State<guestChat> {
   final TextEditingController _chatController = TextEditingController();
   List<FAQ> faqList = [];
   List<ChatMessage> chatHistory = [];
@@ -38,9 +38,7 @@ class _ChatState extends State<chat> {
   @override
   void initState() {
     super.initState();
-    // checkSelectedRep();
-    getUserData();
-    // fetchCabRep();
+    // getUserData();
     fetchFAQs();
     fetchChatHistory();
     startChatHistoryPolling();
@@ -56,8 +54,8 @@ class _ChatState extends State<chat> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => chat(
-          uname: widget.uname,
+        builder: (context) => guestChat(
+          uId: widget.uId,
           status: widget.status,
           product: "false",
         ),
@@ -67,7 +65,7 @@ class _ChatState extends State<chat> {
 
   Future<void> checkSelectedRep() async {
     final response = await http.post(Uri.parse('http://localhost/userCS.php'),
-        body: {'check': "true", 'uId': userData['UserId']});
+        body: {'check': "true", 'uId': widget.uId});
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       print(data);
@@ -85,32 +83,32 @@ class _ChatState extends State<chat> {
     }
   }
 
-  Map<String, dynamic> userData = {};
-  Future<void> getUserData() async {
-    print("uname" + widget.uname);
-    final response = await http.post(
-        Uri.parse('http://localhost/getUserData.php'),
-        body: {'username': widget.uname});
-    if (response.statusCode == 200) {
-      final jsonData = jsonDecode(response.body);
-      if (jsonData['success']) {
-        if (jsonData.containsKey('data') &&
-            jsonData['data'] is List &&
-            jsonData['data'].length > 0) {
-          var data = jsonData['data'][0];
-          setState(() {
-            userData = Map<String, dynamic>.from(data);
-          });
-        } else {
-          print('Invalid data format in the API response');
-        }
-      } else {
-        print(jsonData['message']);
-      }
-    } else {
-      throw Exception('Failed to fetch user data');
-    }
-  }
+  // Map<String, dynamic> userData = {};
+  // Future<void> getUserData() async {
+  //   print("uname" + widget.uname);
+  //   final response = await http.post(
+  //       Uri.parse('http://localhost/getUserData.php'),
+  //       body: {'username': widget.uname});
+  //   if (response.statusCode == 200) {
+  //     final jsonData = jsonDecode(response.body);
+  //     if (jsonData['success']) {
+  //       if (jsonData.containsKey('data') &&
+  //           jsonData['data'] is List &&
+  //           jsonData['data'].length > 0) {
+  //         var data = jsonData['data'][0];
+  //         setState(() {
+  //           userData = Map<String, dynamic>.from(data);
+  //         });
+  //       } else {
+  //         print('Invalid data format in the API response');
+  //       }
+  //     } else {
+  //       print(jsonData['message']);
+  //     }
+  //   } else {
+  //     throw Exception('Failed to fetch user data');
+  //   }
+  // }
 
   List<Map<String, dynamic>> repList = [];
   Future<void> fetchCabRep() async {
@@ -131,7 +129,7 @@ class _ChatState extends State<chat> {
 
   Future<void> selectCabRep(String repId) async {
     final response = await http.post(Uri.parse('http://localhost/userCS.php'),
-        body: {'selected': "true", 'uId': userData['UserId'], 'repId': repId});
+        body: {'selected': "true", 'uId': widget.uId, 'repId': repId});
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       if (data['success']) {
@@ -180,13 +178,13 @@ class _ChatState extends State<chat> {
       isLoading = true;
     });
     // print("chat Hist " + userData["UserId"]);
-    if (userData['UserId'] == null) {
+    if (widget.uId == null) {
       print("User data kosong :(");
     } else {
       var url = Uri.parse('http://localhost/chat.php');
       final response = await http.post(url, body: {
-        'uId': userData["UserId"],
-        'userStat': userData["StatusUser"]
+        'uId': widget.uId,
+        'userStat': widget.status
       });
       // print(jsonDecode(response.body));
       if (response.statusCode == 200) {
@@ -237,7 +235,7 @@ class _ChatState extends State<chat> {
     var url = Uri.parse('http://localhost/faq.php');
     var response = await http.post(url, body: {
       'faqId': faq.id.toString(),
-      'userId': userData['UserId'],
+      'userId': widget.uId,
       'timeView': currentTime.toString(),
     });
 
@@ -284,7 +282,7 @@ class _ChatState extends State<chat> {
   void sendMessage(String message, String sender) async {
     var url = Uri.parse('http://localhost/chat.php');
     final response = await http.post(url, body: {
-      'uId': userData["UserId"],
+      'uId': widget.uId,
       'message': message,
       'time': currentTime.toString(),
       'sender': sender,
@@ -304,7 +302,7 @@ class _ChatState extends State<chat> {
   void getWA() async {
     var url = Uri.parse('http://localhost/chat.php');
     final response = await http.post(url, body: {
-      'uId': userData["UserId"],
+      'uId': widget.uId,
       'getWA': "true",
     });
     if (response.statusCode == 200) {
@@ -336,7 +334,7 @@ class _ChatState extends State<chat> {
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                sendMessage("Chat", widget.uname);
+                sendMessage("Chat", "Guest");
                 const Duration(seconds: 5);
                 sendMessage(
                     "Baik, sales kami akan segera melayani anda", "admin");
@@ -346,7 +344,7 @@ class _ChatState extends State<chat> {
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                sendMessage("Call", widget.uname);
+                sendMessage("Call", "Guest");
                 getWA();
               },
               child: Text('Call'),
@@ -370,7 +368,7 @@ class _ChatState extends State<chat> {
   Widget build(BuildContext context) {
     if (widget.product != "false") {
       sendMessage("Saya mau bertanya mengenai, Product: ${widget.product}",
-          widget.uname);
+          "Guest");
     }
     return Scaffold(
       appBar: AppBar(
@@ -400,7 +398,7 @@ class _ChatState extends State<chat> {
                     itemCount: chatHistory.length,
                     itemBuilder: (context, index) {
                       final message = chatHistory[index];
-                      final isCurrentUser = message.sender != "admin";
+                      final isCurrentUser = message.sender == "Guest";
                       return Align(
                         alignment: isCurrentUser
                             ? Alignment.topRight
@@ -548,7 +546,7 @@ class _ChatState extends State<chat> {
                     onPressed: () {
                       final message = _chatController.text.trim();
                       if (message.isNotEmpty) {
-                        sendMessage(message, widget.uname);
+                        sendMessage(message, "Guest");
                         _chatController.clear();
                       }
                     },

@@ -1,4 +1,5 @@
 import 'package:app/chat.dart';
+import 'package:app/guestChat.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -93,16 +94,29 @@ class ListCsState extends State<ListCs> {
   }
 
   void navigateToChatPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => chat(
-          uname: widget.uname,
-          status: widget.status,
-          product: "false",
+    if (widget.status == "3") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => chat(
+            uname: widget.uname,
+            status: widget.status,
+            product: "false",
+          ),
         ),
-      ),
-    );
+      );
+    } else if (widget.status == "0") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => guestChat(
+            uId: widget.uname,
+            status: widget.status,
+            product: "false",
+          ),
+        ),
+      );
+    }
   }
 
   @override

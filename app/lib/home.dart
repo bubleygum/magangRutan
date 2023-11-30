@@ -1,6 +1,7 @@
 import 'package:app/admin_home.dart';
 import 'package:app/cs_chatList.dart';
 import 'package:app/admin_chatList.dart';
+import 'package:app/guestChat.dart';
 import 'package:app/listCS.dart';
 import 'package:app/login.dart';
 import 'package:app/notification_service.dart';
@@ -62,20 +63,20 @@ class _HomeScreenState extends State<userHomeScreen> {
     super.dispose();
   }
 
-Future<void> fetchCarouselImages() async {
-  final response =
-      await http.get(Uri.parse('http://localhost/fetchCarousel.php'));
+  Future<void> fetchCarouselImages() async {
+    final response =
+        await http.get(Uri.parse('http://localhost/fetchCarousel.php'));
 
-  if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
-    // print(jsonDecode(response.body));
-    setState(() {
-      carouselImages = List<Map<String, dynamic>>.from(data['data']);
-    });
-  } else {
-    throw Exception('Failed to fetch carousel images');
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print(jsonDecode(response.body));
+      setState(() {
+        carouselImages = List<Map<String, dynamic>>.from(data['data']);
+      });
+    } else {
+      throw Exception('Failed to fetch carousel images');
+    }
   }
-}
 
   Future<void> fetchBtn() async {
     try {
@@ -450,7 +451,28 @@ Future<void> fetchCarouselImages() async {
                     ),
                   ),
                 );
+              } else if (status == "2") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => csChatList(
+                      username: uname,
+                    ),
+                  ),
+                );
               } else if (status == "3") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ListCs(
+                      uname: uname,
+                      uId: userId.toString(),
+                      status: status,
+                      product: "false",
+                    ),
+                  ),
+                );
+              } else if (status == "0") {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -714,7 +736,7 @@ Future<void> fetchCarouselImages() async {
                               ),
                               Expanded(
                                 child: Opacity(
-                                  opacity: 0.5,
+                                  opacity: 1,
                                   child: Image.network(
                                     prodTagData[index]['UrlPhoto']!,
                                     errorBuilder: (context, error, stackTrace) {
@@ -785,16 +807,22 @@ Future<void> fetchCarouselImages() async {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) =>
-                        chat(uname: uname, status: status, product: "false")),
+                  builder: (context) => prodList(
+                    data: "All",
+                    uname: uname,
+                    status: status,
+                  ),
+                ),
               );
               break;
             case 3:
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) =>
-                        Profile(username: uname, status: status,)),
+                    builder: (context) => Profile(
+                          username: uname,
+                          status: status,
+                        )),
               );
               break;
           }
@@ -914,8 +942,13 @@ Future<void> fetchCarouselImages() async {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) =>
-                          chat(uname: uname, status: status, product: "false")),
+                    builder: (context) => ListCs(
+                      uname: uname,
+                      uId: userId.toString(),
+                      status: status,
+                      product: "false",
+                    ),
+                  ),
                 );
               },
             ),
